@@ -1,0 +1,14 @@
+Control
+Label
+HBoxContainer
+Button
+VBoxContainer
+TextureRect
+Node3D
+CollisionShape3D
+StaticBody3D
+SubViewport
+OmniLight3D
+WorldEnvironment
+DirectionalLight3D
+Camera3D

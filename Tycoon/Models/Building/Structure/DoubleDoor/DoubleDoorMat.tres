@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://pkbcqsjuvwyb"]
+
+[ext_resource type="Texture2D" uid="uid://60tym5opu0dy" path="res://Models/Building/Structure/DoubleDoor/TestDoubleDoor.png" id="1_cwd0j"]
+
+[resource]
+resource_name = "DoubleDoorMat"
+cull_mode = 2
+albedo_color = Color(0.906332, 0.906332, 0.906332, 1)
+albedo_texture = ExtResource("1_cwd0j")
+roughness = 0.5
+texture_filter = 2
