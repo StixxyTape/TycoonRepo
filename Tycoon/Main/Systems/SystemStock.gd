@@ -2,7 +2,6 @@ extends Node
 
 #region References
 @onready var cam : Camera3D = get_node("../CamMover/Camera3D")
-@onready var uiSys : Control = get_tree().current_scene.get_node("UISystem")
 
 #endregion
 
@@ -16,6 +15,7 @@ var rayCol
 var stockInventory : Dictionary
 
 var currentShelf : Node3D
+var currentShelfLevel : Node3D
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -26,29 +26,24 @@ func _ready() -> void:
 	}
 	stockInventory[001] = {
 		"name" : "Canned Goods",
-		"amount" : 10
+		"amount" : 200
 	}
 	stockInventory[002] = {
 		"name" : "Fresh Produce",
-		"amount" : 5
+		"amount" : 150
 	}
 	stockInventory[003] = {
 		"name" : "Snacks",
-		"amount" : 15
+		"amount" : 300
 	}
 	stockInventory[004] = {
 		"name" : "Drinks",
-		"amount" : 10
+		"amount" : 250
 	}
 	
 func _process(delta: float) -> void:
 	if Global.stockMode:
 		MouseRaycast()
-		InputManager()
-
-func InputManager():
-	if Input.is_action_just_pressed("Place"):
-		pass
 		
 # A function that handles raycasting to the 3D grid and logic for deleting/building
 func MouseRaycast():
@@ -59,25 +54,48 @@ func MouseRaycast():
 	rayEnd = rayOrigin + cam.project_ray_normal(mousePos) * 100
 	
 	var query : PhysicsRayQueryParameters3D
-	query = PhysicsRayQueryParameters3D.create(rayOrigin, rayEnd, 1);
+	# Only interact with shelves
+	if !Global.stocking:
+		query = PhysicsRayQueryParameters3D.create(rayOrigin, rayEnd, 1);
+	# Interact with shelves and shelf levels
+	elif Global.stocking:
+		query = PhysicsRayQueryParameters3D.create(rayOrigin, rayEnd, 9);
 		
 	var intersection = spaceState.intersect_ray(query)
 	
 	#endregion 
 	
 	if !intersection.is_empty():
-		var colliderObj = intersection["collider"].get_parent().get_parent()
-		if Input.is_action_just_pressed("Place") and colliderObj.is_in_group("Shelf"):
+		var colliderObj = intersection["collider"]
+		if Input.is_action_just_pressed("Place"):
 			if Global.mouseHover:
 				return
-			var shelf = colliderObj
-			currentShelf = shelf
-			uiSys.ShelfUpdate(currentShelf)
-			uiSys.CloseStockMenu()
-			uiSys.OpenStockMenu(currentShelf)
-			Global.camCanMove = false
-			Global.stocking = true
-			cam.TweenCamera(currentShelf, 1.5, .8)
+			if (!Global.stocking and 
+				colliderObj.get_parent().get_parent().is_in_group("Shelf")):
+				Global.camCanMove = false
+				Global.stocking = true
+				currentShelf = colliderObj.get_parent().get_parent()
+				cam.TweenCamera(currentShelf, 1.5, .8)
+				Global.uiSys.CreateReturnButton()
+			elif Global.stocking:
+				if colliderObj.get_parent().is_in_group("ShelfLevel"):
+					if colliderObj.get_parent().get_parent().get_parent() == currentShelf:
+						currentShelfLevel = colliderObj.get_parent()
+						Global.uiSys.ShelfUpdate(currentShelfLevel)
+						Global.uiSys.CloseStockMenu()
+						Global.uiSys.OpenStockMenu(currentShelfLevel)
+					else:
+						currentShelf = colliderObj.get_parent().get_parent().get_parent()
+						cam.TweenCamera(currentShelf, 1.5, .8)
+						Global.uiSys.CloseStockMenu()
+						Global.uiSys.CreateReturnButton()
+						
+				elif colliderObj.get_parent().get_parent().is_in_group("Shelf"):
+					if colliderObj.get_parent().get_parent() != currentShelf:
+						currentShelf = colliderObj.get_parent().get_parent()
+						cam.TweenCamera(currentShelf, 1.5, .8)
+						Global.uiSys.CloseStockMenu()
+						Global.uiSys.CreateReturnButton()
 	else:
 		ResetRayCol()
 		
@@ -90,39 +108,46 @@ func ResetRayCol():
 	rayCol = null
 	
 func StockShelf(item : int, shelf : Node3D):
-	var itemsToStock = shelf.maxStock - shelf.currentStock
+	var itemsToStock = shelf.GetShelfState().maxStock - shelf.GetShelfState().currentStock
 	var itemsAvailableToStock = stockInventory[item]["amount"]
+	
+	var prevStockType = shelf.stockType
 	
 	if shelf.stockType == 0:
 		shelf.stockType = item 
+		shelf.AutoStockCheck(prevStockType)
+		itemsToStock = shelf.GetShelfState().maxStock - shelf.GetShelfState().currentStock
 		StockCalc(item, shelf, itemsToStock, itemsAvailableToStock)
 		
 	else:
 		if shelf.stockType == item:
 			StockCalc(item, shelf, itemsToStock, itemsAvailableToStock)
 		else:
-			stockInventory[shelf.stockType]["amount"] += shelf.currentStock
+			stockInventory[shelf.stockType]["amount"] += shelf.GetShelfState().currentStock
 			shelf.stockType = item 
-			shelf.currentStock = 0
-			itemsToStock = shelf.maxStock
+			shelf.AutoStockCheck(prevStockType)
+			shelf.GetShelfState().currentStock = 0
+			itemsToStock = shelf.GetShelfState().maxStock
 			StockCalc(item, shelf, itemsToStock, itemsAvailableToStock)
 	
+	shelf.UpdateStock()
 	Global.UpdateUI()
-	uiSys.ShelfUpdate(currentShelf)
+	Global.uiSys.ShelfUpdate(shelf)
 	
 func StockCalc(item, shelf, itemsToStock, itemsAvailableToStock):
 	# Stock it to the max
 	if itemsAvailableToStock >= itemsToStock:
-		shelf.currentStock += itemsToStock
+		shelf.GetShelfState().currentStock += itemsToStock
 		stockInventory[item]["amount"] -= itemsToStock
 	# Stock it with the remaining items left in inventory
 	else:
-		shelf.currentStock += itemsAvailableToStock
+		shelf.GetShelfState().currentStock += itemsAvailableToStock
 		stockInventory[item]["amount"] -= itemsAvailableToStock
 
 func ExitStock():
-	uiSys.CloseStockMenu()
+	Global.uiSys.CloseStockMenu()
 	currentShelf = null
+	currentShelfLevel = null
 	cam.ExitTween()
 	Global.stocking = false
 	Global.camCanMove = true

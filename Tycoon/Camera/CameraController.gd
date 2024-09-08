@@ -20,7 +20,9 @@ func _input(event):
 func _physics_process(delta):
 	if Global.camCanMove:
 		MovementManager(delta)
-		
+	if Input.is_action_just_released("CameraRotate"):
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			
 func MovementManager(delta):
 	if Input.is_action_pressed("CameraRotate"):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -31,9 +33,6 @@ func MovementManager(delta):
 		rotation.x = clampf(rotation.x, -PI/2, PI/2)
 		
 		camInput = Vector2.ZERO
-		
-	if Input.is_action_just_released("CameraRotate"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	
 	if Input.is_action_pressed("Run"):
 		speed = 15

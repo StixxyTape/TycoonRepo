@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://bghyeayf3d5wh"]
+
+[ext_resource type="Script" path="res://Shelves/Shelf.gd" id="1_8fqtc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vwbtv"]
+
+[node name="ShelfLevel" type="Node3D" groups=["ShelfLevel"]]
+script = ExtResource("1_8fqtc")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 8
+collision_mask = 8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("BoxShape3D_vwbtv")

@@ -18,6 +18,10 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 
 Global="*res://Main/Scripts/Global.gd"
 
+[debug]
+
+shapes/collision/shape_color=Color(5.77569e-07, 0.559711, 0.874107, 1)
+
 [input]
 
 Forward={
@@ -89,6 +93,8 @@ SwitchMode={
 [layer_names]
 
 3d_physics/layer_2="Grid"
+3d_physics/layer_3="GridFloor"
+3d_physics/layer_4="Stockable"
 
 [rendering]
 

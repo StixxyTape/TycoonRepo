@@ -1,6 +1,9 @@
-[gd_scene load_steps=6 format=4 uid="uid://dfg2i8yf0sb01"]
+[gd_scene load_steps=14 format=4 uid="uid://dfg2i8yf0sb01"]
 
-[ext_resource type="Script" path="res://Main/Systems/SystemShelf.gd" id="1_an73w"]
+[ext_resource type="Script" path="res://Shelves/Shelf.gd" id="1_an73w"]
+[ext_resource type="PackedScene" uid="uid://d2vajy4hf2gjq" path="res://Models/Stock/Drink.gltf" id="2_l7p15"]
+[ext_resource type="PackedScene" uid="uid://b1378eukji48h" path="res://Shelves/ShelfState.tscn" id="2_lwcfj"]
+[ext_resource type="PackedScene" uid="uid://cn15ia2co77ni" path="res://Models/Stock/CannedGood.gltf" id="3_goeeg"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_76kln"]
 resource_name = "BasicShelfMat"
@@ -40,18 +43,92 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_dwacc")
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_62y82"]
+albedo_color = Color(0, 0, 0, 1)
+
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_tagkp"]
 data = PackedVector3Array(-0.4, 0.9, -1, -1, 0.9, 1, -1, 0.9, -1, -0.4, 0.9, -1, -0.4, 0.9, 1, -1, 0.9, 1, -0.3, 0.575, 1, -1, 0.9, 1, -0.4, 0.9, 1, -0.3, 0.575, 1, -1, 0.575, 1, -1, 0.9, 1, -1, 0.575, 1, -1, 0.9, -1, -1, 0.9, 1, -1, 0.575, 1, -1, 0.575, -1, -1, 0.9, -1, 0, -1, -1, 1, -1, 1, 1, -1, -1, 0, -1, -1, 0, -1, 1, 1, -1, 1, -0.1, -0.425, 1, 0.9, -0.425, -1, 0.9, -0.425, 1, -0.1, -0.425, 1, -0.1, -0.425, -1, 0.9, -0.425, -1, -0.1, -0.5, 1, 0, -0.925, -1, 0, -0.925, 1, -0.1, -0.5, 1, -0.1, -0.5, -1, 0, -0.925, -1, -1, 0.575, -1, -0.4, 0.9, -1, -1, 0.9, -1, -1, 0.575, -1, -0.3, 0.575, -1, -0.4, 0.9, -1, -1, -1, -1, 0, -1, 1, 0, -1, -1, -1, -1, -1, -1, -1, 1, 0, -1, 1, -0.1, -0.5, -1, 0.9, -0.5, 1, 0.9, -0.5, -1, -0.1, -0.5, -1, -0.1, -0.5, 1, 0.9, -0.5, 1, 0, -0.925, 1, 1, -0.925, -1, 1, -0.925, 1, 0, -0.925, 1, 0, -0.925, -1, 1, -0.925, -1, -0.4, 0.9, 1, -0.3, 0.575, -1, -0.3, 0.575, 1, -0.4, 0.9, 1, -0.4, 0.9, -1, -0.3, 0.575, -1, -0.3, 0.5, -1, 0.7, 0.5, 1, 0.7, 0.5, -1, -0.3, 0.5, -1, -0.3, 0.5, 1, 0.7, 0.5, 1, -0.2, 0, -1, 0.8, 0, 1, 0.8, 0, -1, -0.2, 0, -1, -0.2, 0, 1, 0.8, 0, 1, -1, -0.925, -1, -0.1, -0.5, -1, -1, -0.5, -1, -1, -0.925, -1, 0, -0.925, -1, -0.1, -0.5, -1, -1, -0.425, -1, -0.2, 0, -1, -1, 0, -1, -1, -0.425, -1, -0.1, -0.425, -1, -0.2, 0, -1, -1, 0.075, -1, -0.3, 0.5, -1, -1, 0.5, -1, -1, 0.075, -1, -0.2, 0.075, -1, -0.3, 0.5, -1, -0.3, 0.5, 1, -0.2, 0.075, -1, -0.2, 0.075, 1, -0.3, 0.5, 1, -0.3, 0.5, -1, -0.2, 0.075, -1, -0.2, 0, 1, -0.1, -0.425, -1, -0.1, -0.425, 1, -0.2, 0, 1, -0.2, 0, -1, -0.1, -0.425, -1, 0.7, 0.575, -1, -0.3, 0.575, 1, -0.3, 0.575, -1, 0.7, 0.575, -1, 0.7, 0.575, 1, -0.3, 0.575, 1, -0.2, 0.075, 1, 0.8, 0.075, -1, 0.8, 0.075, 1, -0.2, 0.075, 1, -0.2, 0.075, -1, 0.8, 0.075, -1, -1, -0.925, 1, -1, -0.5, -1, -1, -0.5, 1, -1, -0.925, 1, -1, -0.925, -1, -1, -0.5, -1, -1, -0.425, 1, -1, 0, -1, -1, 0, 1, -1, -0.425, 1, -1, -0.425, -1, -1, 0, -1, -1, 0.075, 1, -1, 0.5, -1, -1, 0.5, 1, -1, 0.075, 1, -1, 0.075, -1, -1, 0.5, -1, 0, -0.925, 1, -1, -0.5, 1, -0.1, -0.5, 1, 0, -0.925, 1, -1, -0.925, 1, -1, -0.5, 1, -0.1, -0.425, 1, -1, 0, 1, -0.2, 0, 1, -0.1, -0.425, 1, -1, -0.425, 1, -1, 0, 1, -0.2, 0.075, 1, -1, 0.5, 1, -0.3, 0.5, 1, -0.2, 0.075, 1, -1, 0.075, 1, -1, 0.5, 1, -0.2, 0, 1, -1, 0.075, 1, -0.2, 0.075, 1, -0.2, 0, 1, -1, 0, 1, -1, 0.075, 1, -1, 0, 1, -1, 0.075, -1, -1, 0.075, 1, -1, 0, 1, -1, 0, -1, -1, 0.075, -1, 0.8, 0, -1, 0.8, 0.075, 1, 0.8, 0.075, -1, 0.8, 0, -1, 0.8, 0, 1, 0.8, 0.075, 1, -0.2, 0, -1, 0.8, 0.075, -1, -0.2, 0.075, -1, -0.2, 0, -1, 0.8, 0, -1, 0.8, 0.075, -1, -1, 0, -1, -0.2, 0.075, -1, -1, 0.075, -1, -1, 0, -1, -0.2, 0, -1, -0.2, 0.075, -1, 0.8, 0, 1, -0.2, 0.075, 1, 0.8, 0.075, 1, 0.8, 0, 1, -0.2, 0, 1, -0.2, 0.075, 1, -0.1, -0.5, 1, -1, -0.425, 1, -0.1, -0.425, 1, -0.1, -0.5, 1, -1, -0.5, 1, -1, -0.425, 1, -1, -0.5, 1, -1, -0.425, -1, -1, -0.425, 1, -1, -0.5, 1, -1, -0.5, -1, -1, -0.425, -1, 0.9, -0.5, -1, 0.9, -0.425, 1, 0.9, -0.425, -1, 0.9, -0.5, -1, 0.9, -0.5, 1, 0.9, -0.425, 1, -0.1, -0.5, -1, 0.9, -0.425, -1, -0.1, -0.425, -1, -0.1, -0.5, -1, 0.9, -0.5, -1, 0.9, -0.425, -1, -1, -0.5, -1, -0.1, -0.425, -1, -1, -0.425, -1, -1, -0.5, -1, -0.1, -0.5, -1, -0.1, -0.425, -1, 0.9, -0.5, 1, -0.1, -0.425, 1, 0.9, -0.425, 1, 0.9, -0.5, 1, -0.1, -0.5, 1, -0.1, -0.425, 1, 0, -1, 1, -1, -0.925, 1, 0, -0.925, 1, 0, -1, 1, -1, -1, 1, -1, -0.925, 1, -1, -1, 1, -1, -0.925, -1, -1, -0.925, 1, -1, -1, 1, -1, -1, -1, -1, -0.925, -1, 1, -1, -1, 1, -0.925, 1, 1, -0.925, -1, 1, -1, -1, 1, -1, 1, 1, -0.925, 1, 0, -1, -1, 1, -0.925, -1, 0, -0.925, -1, 0, -1, -1, 1, -1, -1, 1, -0.925, -1, -1, -1, -1, 0, -0.925, -1, -1, -0.925, -1, -1, -1, -1, 0, -1, -1, 0, -0.925, -1, 1, -1, 1, 0, -0.925, 1, 1, -0.925, 1, 1, -1, 1, 0, -1, 1, 0, -0.925, 1, 0.7, 0.5, 1, -0.3, 0.575, 1, 0.7, 0.575, 1, 0.7, 0.5, 1, -0.3, 0.5, 1, -0.3, 0.575, 1, -1, 0.5, -1, -0.3, 0.575, -1, -1, 0.575, -1, -1, 0.5, -1, -0.3, 0.5, -1, -0.3, 0.575, -1, -0.3, 0.5, -1, 0.7, 0.575, -1, -0.3, 0.575, -1, -0.3, 0.5, -1, 0.7, 0.5, -1, 0.7, 0.575, -1, 0.7, 0.5, -1, 0.7, 0.575, 1, 0.7, 0.575, -1, 0.7, 0.5, -1, 0.7, 0.5, 1, 0.7, 0.575, 1, -1, 0.5, 1, -1, 0.575, -1, -1, 0.575, 1, -1, 0.5, 1, -1, 0.5, -1, -1, 0.575, -1, -0.3, 0.5, 1, -1, 0.575, 1, -0.3, 0.575, 1, -0.3, 0.5, 1, -1, 0.5, 1, -1, 0.575, 1)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_eb44a"]
+size = Vector3(0.241225, 0.312247, 1.78594)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8cuqv"]
+size = Vector3(0.239856, 0.312735, 1.78594)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pr757"]
+size = Vector3(0.239856, 0.318106, 1.78594)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_palvs"]
+size = Vector3(0.240478, 0.282324, 1.78594)
+
 [node name="BasicShelf" type="Node3D" groups=["Shelf"]]
-script = ExtResource("1_an73w")
 
 [node name="BasicShelf " type="MeshInstance3D" parent="."]
 transform = Transform3D(0.25, 0, 0, 0, 0.72, 0, 0, 0, 0.9, 0, 0.72, 0)
 mesh = SubResource("ArrayMesh_fwepf")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_62y82")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="BasicShelf "]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="BasicShelf /StaticBody3D"]
 shape = SubResource("ConcavePolygonShape3D_tagkp")
+
+[node name="ShelfStates" type="Node3D" parent="."]
+
+[node name="Empty" parent="ShelfStates" instance=ExtResource("2_lwcfj")]
+maxStock = 0
+
+[node name="Canned Goods" parent="ShelfStates" instance=ExtResource("2_lwcfj")]
+autoStock = true
+stockPref = ExtResource("3_goeeg")
+
+[node name="Drinks" parent="ShelfStates" instance=ExtResource("2_lwcfj")]
+autoStock = true
+stockPref = ExtResource("2_l7p15")
+
+[node name="ShelfLevels" type="Node3D" parent="."]
+
+[node name="ShelfLevel" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
+script = ExtResource("1_an73w")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="ShelfLevels/ShelfLevel"]
+collision_layer = 8
+collision_mask = 8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.120427, 0.208174, 0)
+shape = SubResource("BoxShape3D_eb44a")
+
+[node name="ShelfLevel2" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
+script = ExtResource("1_an73w")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="ShelfLevels/ShelfLevel2"]
+collision_layer = 8
+collision_mask = 8
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel2/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.096, 0.565442, 0)
+shape = SubResource("BoxShape3D_8cuqv")
+
+[node name="ShelfLevel3" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
+script = ExtResource("1_an73w")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="ShelfLevels/ShelfLevel3"]
+collision_layer = 8
+collision_mask = 8
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel3/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.928385, 0)
+shape = SubResource("BoxShape3D_pr757")
+
+[node name="ShelfLevel4" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
+script = ExtResource("1_an73w")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="ShelfLevels/ShelfLevel4"]
+collision_layer = 8
+collision_mask = 8
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel4/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0544943, 1.27284, 0)
+shape = SubResource("BoxShape3D_palvs")

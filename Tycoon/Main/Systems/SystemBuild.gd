@@ -21,8 +21,10 @@ var buildMode : int = 0
 var objectRotation : int = 0
 
 var currentCellPref : PackedScene
+var currentCellPreviewPref : PackedScene
 var currentEdgePref : PackedScene
 var currentFloorPref : PackedScene
+
 
 #endregion
 
@@ -59,10 +61,13 @@ var floorPref : PackedScene = preload("res://Models/Building/Structure/FloorTile
 #endregion
 
 #region Shelves
-var basicShelfPref : PackedScene = preload("res://Shelves/BasicShelf.tscn")
+var basicShelfPreview : PackedScene = preload("res://Models/Building/Shelving/BasicShelf/BasicShelf.gltf")
 var singleFridgePref : PackedScene = preload("res://Models/Building/Shelving/SingleFridge/SingleFridge.gltf")
 var displayTablePref : PackedScene = preload("res://Models/Building/Shelving/DisplayTable/DisplayTable.gltf")
 var longShelfPref : PackedScene = preload("res://Models/Building/Shelving/LongShelf/shelves.gltf")
+
+
+var basicShelfPref : PackedScene = preload("res://Shelves/BasicShelf.tscn")
 #endregion
 
 #region Delete Mode
@@ -100,6 +105,7 @@ func _ready() -> void:
 	Global.switchSignal.connect(ResetEverything)
 	
 	currentCellPref = basicShelfPref
+	currentCellPreviewPref = basicShelfPreview
 	currentEdgePref = wallPref
 	currentFloorPref = floorPref
 	
@@ -436,7 +442,7 @@ func CellPreview(point : Vector2):
 	ResetHighlightedCells()
 	
 	# We spawn in the object and set it's rotation for an accurate size calc
-	var newObj = currentCellPref.instantiate()
+	var newObj = currentCellPreviewPref.instantiate()
 	newObj.rotation_degrees.y = objectRotation
 	add_child(newObj)
 	var newObjSize : Vector3 = (
@@ -599,7 +605,7 @@ func CellPreview(point : Vector2):
 		
 				
 func CreatePreviewStruct(newPos : Vector3, intersections : Array):
-	var tempObj = currentCellPref.instantiate()
+	var tempObj = currentCellPreviewPref.instantiate()
 	tempObj.position = newPos
 	tempObj.rotation_degrees.y = objectRotation
 	if tempObj.position in previewStructures:
