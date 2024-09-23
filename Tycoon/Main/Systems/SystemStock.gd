@@ -13,6 +13,7 @@ var rayCol
 #endregion
 
 var stockInventory : Dictionary
+var categoryDic : Dictionary
 
 var currentShelf : Node3D
 var currentShelfLevel : Node3D
@@ -21,30 +22,43 @@ var currentShelfLevel : Node3D
 func _ready() -> void:
 	Global.switchSignal.connect(ResetEverything)
 	
-	stockInventory[000] = {
-		"name" : "Empty"
-	}
-	stockInventory[001] = {
-		"name" : "Canned Goods",
-		"amount" : 200
-	}
-	stockInventory[002] = {
-		"name" : "Fresh Produce",
-		"amount" : 150
-	}
-	stockInventory[003] = {
-		"name" : "Snacks",
-		"amount" : 300
-	}
-	stockInventory[004] = {
-		"name" : "Drinks",
-		"amount" : 250
-	}
+	EstablishCategories()
+	EstablishStockInventory()
 	
 func _process(delta: float) -> void:
 	if Global.stockMode:
 		MouseRaycast()
 		
+func EstablishCategories():
+	categoryDic["Food"] = {}
+	categoryDic["Drink"] = {}
+	categoryDic["Snacks"] = {}
+	
+func EstablishStockInventory():
+	stockInventory[000] = {
+		"name" : "Empty"
+	}
+	stockInventory[001] = {
+		"name" : "Canned Goods",
+		"amount" : 999,
+		"category" : "Food"
+	}
+	stockInventory[002] = {
+		"name" : "Fresh Produce",
+		"amount" : 999,
+		"category" : "Drink"
+	}
+	stockInventory[003] = {
+		"name" : "Snacks",
+		"amount" : 999,
+		"category" : "Food"
+	}
+	stockInventory[004] = {
+		"name" : "Drinks",
+		"amount" : 999,
+		"category" : "Drink"
+	}
+
 # A function that handles raycasting to the 3D grid and logic for deleting/building
 func MouseRaycast():
 	#region Raycast Setup
@@ -113,6 +127,9 @@ func StockShelf(item : int, shelf : Node3D):
 	
 	var prevStockType = shelf.stockType
 	
+	if shelf.updating:
+		return 
+		
 	if shelf.stockType == 0:
 		shelf.stockType = item 
 		shelf.AutoStockCheck(prevStockType)
@@ -130,7 +147,7 @@ func StockShelf(item : int, shelf : Node3D):
 			itemsToStock = shelf.GetShelfState().maxStock
 			StockCalc(item, shelf, itemsToStock, itemsAvailableToStock)
 	
-	shelf.UpdateStock()
+	shelf.ChangeStock()
 	Global.UpdateUI()
 	Global.uiSys.ShelfUpdate(shelf)
 	

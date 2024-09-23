@@ -2,7 +2,6 @@ extends Node
 
 #region References
 @onready var cam : Camera3D = get_node("../CamMover/Camera3D")
-@onready var gridSys : Node3D = get_node("../GridSystem")
 
 #endregion
 
@@ -109,7 +108,7 @@ func _ready() -> void:
 	currentEdgePref = wallPref
 	currentFloorPref = floorPref
 	
-	for dic in gridSys.floorGridDics:
+	for dic in Global.gridSys.floorGridDics:
 		var newObjectArray : Array = []
 		floorObjects.append(newObjectArray)
 		var newEdgeArray : Array = []
@@ -117,11 +116,11 @@ func _ready() -> void:
 		var newFloorArray : Array = []
 		floorFloors.append(newFloorArray)
 		
-	for floor in gridSys.floorGridDics[0]:
-		floorFloors[0].append(gridSys.floorGridDics[0][floor]["floorData"])
+	for floor in Global.gridSys.floorGridDics[0]:
+		floorFloors[0].append(Global.gridSys.floorGridDics[0][floor]["floorData"])
 	
 func _process(delta):
-	currentHeight = currentFloor * gridSys.wallHeight
+	currentHeight = currentFloor * Global.gridSys.wallHeight
 	if Global.buildMode:
 		MouseRaycast()
 		InputManager()
@@ -151,6 +150,7 @@ func InputManager():
 		ResetDeletionObj()
 		if objectsToDelete.size() > 0:
 			DeleteObjects()
+		
 	if Input.is_action_just_pressed("Floor Up"):
 		ResetDeletionObjects()
 		ResetHighlightedCells()
@@ -158,12 +158,12 @@ func InputManager():
 		ResetDeletionCells()
 		ResetPreview()
 		currentFloor += 1
-		currentFloor = clampi(currentFloor, 0, gridSys.maxFloor)
-		gridSys.gridBody.position.y += gridSys.wallHeight
-		gridSys.gridBody.position.y = clampi(
-			gridSys.gridBody.position.y,
+		currentFloor = clampi(currentFloor, 0, Global.gridSys.maxFloor)
+		Global.gridSys.gridBody.position.y += Global.gridSys.wallHeight
+		Global.gridSys.gridBody.position.y = clampi(
+			Global.gridSys.gridBody.position.y,
 			0,
-			gridSys.maxFloor * gridSys.wallHeight
+			Global.gridSys.maxFloor * Global.gridSys.wallHeight
 		)
 		HideFloors()
 	if Input.is_action_just_pressed("Floor Down"):
@@ -173,12 +173,12 @@ func InputManager():
 		ResetDeletionCells()
 		ResetPreview()
 		currentFloor -= 1
-		currentFloor = clampi(currentFloor, 0, gridSys.maxFloor)
-		gridSys.gridBody.position.y -= gridSys.wallHeight
-		gridSys.gridBody.position.y = clampi(
-			gridSys.gridBody.position.y,
+		currentFloor = clampi(currentFloor, 0, Global.gridSys.maxFloor)
+		Global.gridSys.gridBody.position.y -= Global.gridSys.wallHeight
+		Global.gridSys.gridBody.position.y = clampi(
+			Global.gridSys.gridBody.position.y,
 			0,
-			gridSys.maxFloor * gridSys.wallHeight
+			Global.gridSys.maxFloor * Global.gridSys.wallHeight
 		)
 		HideFloors()
 
@@ -223,7 +223,7 @@ func MouseRaycast():
 			or intersection["collider"].get_parent().get_parent() in floorFloors[currentFloor])
 			or intersection["collider"].is_in_group("GridFloor")):
 				var objMesh : MeshInstance3D
-					
+				
 				if Input.is_action_pressed("Place"):
 					ResetDeletionObj()
 					
@@ -263,33 +263,32 @@ func MouseRaycast():
 					
 		elif buildMode == 1:
 			# We establish a gridpoint for dictionary access
-			var gridPoint : Vector2 = gridSys.GlobalToGrid(colPoint)
-			#if gridSys.floorGridDics[currentFloor].has(gridPoint):
+			var gridPoint : Vector2 = Global.gridSys.GlobalToGrid(colPoint)
 				# We sub in the actual colPoint for complex meshes
 			CellPreview(colPoint)
 			if (Input.is_action_just_pressed("ui_accept")
-			and gridPoint in gridSys.floorGridDics[currentFloor]):
-				print(gridSys.floorGridDics[currentFloor][gridPoint])
+			and gridPoint in Global.gridSys.floorGridDics[currentFloor]):
+				print(Global.gridSys.floorGridDics[currentFloor][gridPoint])
 		elif buildMode == 2:
 			# We establish an edgePoint for dictionary access
-			var edgePoint : Vector2 = gridSys.GlobalToEdge(colPoint, RotationCheck())
-			#if gridSys.floorEdgeDics[currentFloor].has(edgePoint):
+			var edgePoint : Vector2 = Global.gridSys.GlobalToEdge(colPoint, RotationCheck())
+			#if Global.gridSys.floorEdgeDics[currentFloor].has(edgePoint):
 			if intersection["collider"].get_parent().get_parent().is_in_group("Floor"):
 				if intersection["collider"].get_parent().get_parent() in floorFloors[currentFloor]:
 					EdgePreview(colPoint)
 			else:
 				EdgePreview(colPoint)
 			if (Input.is_action_just_pressed("ui_accept")
-			and edgePoint in gridSys.floorEdgeDics[currentFloor]):
-				print(gridSys.floorEdgeDics[currentFloor][edgePoint])
+			and edgePoint in Global.gridSys.floorEdgeDics[currentFloor]):
+				print(Global.gridSys.floorEdgeDics[currentFloor][edgePoint])
 		elif buildMode == 3:
-			var gridPoint : Vector2 = gridSys.GlobalToGrid(colPoint)
-			#if gridSys.floorGridDics[currentFloor].has(gridPoint):
+			var gridPoint : Vector2 = Global.gridSys.GlobalToGrid(colPoint)
+			#if Global.gridSys.floorGridDics[currentFloor].has(gridPoint):
 			if round(intersection["position"].y) == currentHeight:
 				FloorPreview(colPoint)
 			if (Input.is_action_just_pressed("ui_accept")
-			and gridPoint in gridSys.floorGridDics[currentFloor]):
-				print(gridSys.floorGridDics[currentFloor][gridPoint])
+			and gridPoint in Global.gridSys.floorGridDics[currentFloor]):
+				print(Global.gridSys.floorGridDics[currentFloor][gridPoint])
 	else:
 		# If the raycast doesn't hit anything, reset most grid variables
 		ResetRayCol()
@@ -322,9 +321,9 @@ func GridDelete(colPoint : Vector2):
 	
 	if previousSelectedCells.size() > 0:
 		for cell in previousSelectedCells:
-			if gridSys.floorGridDics[currentFloor][cell]["floorData"]:
-				gridSys.GetMaterial(
-					gridSys.floorGridDics[currentFloor][cell]["floorData"]
+			if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]:
+				Global.gridSys.GetMaterial(
+					Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
 					).albedo_color = resetCol
 	
 	previousSelectedCells = intersectingCells
@@ -334,15 +333,15 @@ func GridDelete(colPoint : Vector2):
 	objectsToDelete.clear()
 	
 	for cell in intersectingCells:
-		#gridSys.GetMaterial(
-			#gridSys.floorGridDics[currentFloor][cell]["floorData"]
+		#Global.gridSys.GetMaterial(
+			#Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
 			#).albedo_color = redCellCol
-		if gridSys.floorGridDics[currentFloor][cell]["cellData"]:
-			gridSys.GetMaterial(
-				gridSys.floorGridDics[currentFloor][cell]["cellData"]
+		if Global.gridSys.floorGridDics[currentFloor][cell]["cellData"]:
+			Global.gridSys.GetMaterial(
+				Global.gridSys.floorGridDics[currentFloor][cell]["cellData"]
 				).albedo_color = redCellCol
-			if gridSys.floorGridDics[currentFloor][cell]["cellData"].get_child(0) not in objectsToDelete:
-				objectsToDelete.append(gridSys.floorGridDics[currentFloor][cell]["cellData"].get_child(0))
+			if Global.gridSys.floorGridDics[currentFloor][cell]["cellData"].get_child(0) not in objectsToDelete:
+				objectsToDelete.append(Global.gridSys.floorGridDics[currentFloor][cell]["cellData"].get_child(0))
 
 func EdgeDelete(colPoint : Vector2, rotated : bool):
 	var intersectingEdges = MultiSelectEdge(colPoint)
@@ -352,12 +351,12 @@ func EdgeDelete(colPoint : Vector2, rotated : bool):
 	objectsToDelete.clear()
 	
 	for edge in intersectingEdges:
-		if gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] != null:
-			gridSys.GetMaterial(
-				gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]
+		if Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] != null:
+			Global.gridSys.GetMaterial(
+				Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]
 			).albedo_color = redCellCol
-			if gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] not in objectsToDelete:
-				objectsToDelete.append(gridSys.floorEdgeDics[currentFloor][edge]["edgeData"].get_child(0))
+			if Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] not in objectsToDelete:
+				objectsToDelete.append(Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"].get_child(0))
 				
 func FloorDelete(colPoint : Vector2):
 	var selectionResults : Array = MultiSelectGrid(colPoint)
@@ -365,9 +364,9 @@ func FloorDelete(colPoint : Vector2):
 	
 	if previousSelectedCells.size() > 0:
 		for cell in previousSelectedCells:
-			if gridSys.floorGridDics[currentFloor][cell]["floorData"]:
-				gridSys.GetMaterial(
-					gridSys.floorGridDics[currentFloor][cell]["floorData"]
+			if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]:
+				Global.gridSys.GetMaterial(
+					Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
 					).albedo_color = resetCol
 	
 	previousSelectedCells = intersectingCells
@@ -377,19 +376,19 @@ func FloorDelete(colPoint : Vector2):
 	objectsToDelete.clear()
 	
 	for cell in intersectingCells:
-		if gridSys.floorGridDics[currentFloor][cell]["floorData"]:
-			gridSys.GetMaterial(
-				gridSys.floorGridDics[currentFloor][cell]["floorData"]
+		if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]:
+			Global.gridSys.GetMaterial(
+				Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
 				).albedo_color = redCellCol
-			if gridSys.floorGridDics[currentFloor][cell]["floorData"].get_child(0) not in objectsToDelete:
-				objectsToDelete.append(gridSys.floorGridDics[currentFloor][cell]["floorData"].get_child(0))
+			if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"].get_child(0) not in objectsToDelete:
+				objectsToDelete.append(Global.gridSys.floorGridDics[currentFloor][cell]["floorData"].get_child(0))
 
 func ResetDeletionCells():
 	if previousSelectedCells.size() > 0:
 		for cell in previousSelectedCells:
-			if gridSys.floorGridDics[currentFloor][cell]["floorData"]:
-				gridSys.GetMaterial(
-					gridSys.floorGridDics[currentFloor][cell]["floorData"]
+			if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]:
+				Global.gridSys.GetMaterial(
+					Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
 					).albedo_color = resetCol
 				
 		previousSelectedCells.clear()
@@ -400,7 +399,7 @@ func ResetDeletionCells():
 		
 func ResetDeletionObj():
 	if objToDelPreview:
-		gridSys.GetMaterial(objToDelPreview).albedo_color = resetCol
+		Global.gridSys.GetMaterial(objToDelPreview).albedo_color = resetCol
 		objToDelPreview = null
 
 func ResetDeletionObjects():
@@ -428,7 +427,7 @@ func ResetPreview():
 func ResetHighlightedCells():
 	if highlightedCells.size() > 0:
 		for cell in highlightedCells:
-			gridSys.GetMaterial(cell).albedo_color = resetCol
+			Global.gridSys.GetMaterial(cell).albedo_color = resetCol
 		highlightedCells.clear()
 		
 func CellPreview(point : Vector2):
@@ -441,15 +440,17 @@ func CellPreview(point : Vector2):
 
 	ResetHighlightedCells()
 	
+	
 	# We spawn in the object and set it's rotation for an accurate size calc
 	var newObj = currentCellPreviewPref.instantiate()
 	newObj.rotation_degrees.y = objectRotation
 	add_child(newObj)
+	
 	var newObjSize : Vector3 = (
 		newObj.get_child(0).global_transform * 
 		newObj.get_child(0).get_aabb()
 		).size
-	var newPoint : Vector3 = gridSys.GlobalToComplex(point, newObjSize)
+	var newPoint : Vector3 = Global.gridSys.GlobalToComplex(point, newObjSize)
 	newObj.position = Vector3(newPoint.x, currentHeight, newPoint.z)
 	previewStruct = newObj
 	
@@ -569,20 +570,23 @@ func CellPreview(point : Vector2):
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					
 					var newStruct = currentCellPref.instantiate()
-					add_child(newStruct)
+					if newStruct.is_in_group("Shelf"):
+						get_node("Shelves").add_child(newStruct)
+					else:
+						add_child(newStruct)
 					floorObjects[currentFloor].append(newStruct)
 					newStruct.rotation_degrees = previewStructures[struct]["rotation"]
 					newStruct.position = struct
-					gridSys.DuplicateMaterial(newStruct)
+					Global.gridSys.DuplicateMaterial(newStruct)
 					# The cell that stores the rotation and cells the object takes up, used for deletion
-					var storageCell : Vector2 = gridSys.GlobalToGrid(gridPos)
+					var storageCell : Vector2 = Global.gridSys.GlobalToGrid(gridPos)
 					
 					for cell in previewStructures[struct]["cells"]:
-						gridSys.floorGridDics[currentFloor][cell]["cellData"] = newStruct
+						Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] = newStruct
 						if cell != storageCell:
-							gridSys.floorGridDics[currentFloor][storageCell]["cells"].append(cell)
+							Global.gridSys.floorGridDics[currentFloor][storageCell]["cells"].append(cell)
 					if previewStructures[struct]["cells"].size() > 1:
-						gridSys.floorGridDics[currentFloor][storageCell]["storageEdge"] = Vector2(
+						Global.gridSys.floorGridDics[currentFloor][storageCell]["storageEdge"] = Vector2(
 							previewStructures[struct]["edges"][0]
 							)
 						
@@ -591,18 +595,11 @@ func CellPreview(point : Vector2):
 							)
 				
 						for edge in previewStructures[struct]["edges"]:
-							gridSys.floorEdgeDics[currentFloor][edge]["cellData"] = newStruct
+							Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"] = newStruct
 							if edge != storageEdge:
-								gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
+								Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
 							
 		previewStructures.clear()
-		#var tempObj = currentCellPref.instantiate()
-		#tempObj.position = newPoint
-		#tempObj.rotation_degrees.y = objectRotation
-		#gridSys.DuplicateMaterial(tempObj)
-		#add_child(tempObj)
-		#
-		
 				
 func CreatePreviewStruct(newPos : Vector3, intersections : Array):
 	var tempObj = currentCellPreviewPref.instantiate()
@@ -620,8 +617,8 @@ func CreatePreviewStruct(newPos : Vector3, intersections : Array):
 		
 	tempObj.scale.x = 0.998
 	
-	gridSys.DuplicateMaterial(tempObj)
-	var objMat = gridSys.GetMaterial(tempObj)
+	Global.gridSys.DuplicateMaterial(tempObj)
+	var objMat = Global.gridSys.GetMaterial(tempObj)
 	objMat.set_transparency(1)
 	objMat.set_cull_mode(0)
 	objMat.set_depth_draw_mode(1)
@@ -647,7 +644,7 @@ func EdgePreview(point : Vector2):
 	newObj.rotation_degrees.y = objectRotation
 	newObj.scale.x = 1.006
 	var newObjSize : Vector3 = (newObj.get_child(0).global_transform * newObj.get_child(0).get_aabb()).size
-	var newObjPoint : Vector3 = gridSys.GlobalToComplexEdge(point, newObjSize, RotationCheck())
+	var newObjPoint : Vector3 = Global.gridSys.GlobalToComplexEdge(point, newObjSize, RotationCheck())
 	newObjPoint.y = currentHeight
 	newObj.position = newObjPoint
 	
@@ -661,7 +658,7 @@ func EdgePreview(point : Vector2):
 		if !canPlace:
 			return
 		for edge in intersectingEdges:
-			if gridSys.floorEdgeDics[currentFloor][edge]["cellData"]:
+			if Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"]:
 				return
 				
 		if edgePreviewAxis.size() <= 0:
@@ -745,31 +742,31 @@ func EdgePreview(point : Vector2):
 					add_child(newWall)
 					floorEdges[currentFloor].append(newWall)
 					newWall.rotation_degrees = previewStructures[struct]["rotation"]
-					newWall.scale = ZFightFix(gridPos, gridSys.floorEdgeDics[currentFloor])
+					newWall.scale = ZFightFix(gridPos, Global.gridSys.floorEdgeDics[currentFloor])
 					newWall.position = struct
 					newWall.add_to_group("Edge")
-					gridSys.DuplicateMaterial(newWall)
+					Global.gridSys.DuplicateMaterial(newWall)
 					
 					var storageEdge : Vector2 
 					if !RotationCheck():
-						storageEdge = gridSys.GlobalToEdge(gridPos, false)
+						storageEdge = Global.gridSys.GlobalToEdge(gridPos, false)
 					else:
-						storageEdge = gridSys.GlobalToEdge(gridPos, true)
+						storageEdge = Global.gridSys.GlobalToEdge(gridPos, true)
 						
 					for edge in previewStructures[struct]["edges"]:
-						if gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]:
+						if Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]:
 							objectsToDelete.append(
-								gridSys.floorEdgeDics[currentFloor][edge]["edgeData"].get_child(0)
+								Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"].get_child(0)
 								)
 							DeleteObjects()
 							
-						gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] = newWall
-						gridSys.floorEdgeDics[currentFloor][edge]["scale"] = newWall.scale
+						Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] = newWall
+						Global.gridSys.floorEdgeDics[currentFloor][edge]["scale"] = newWall.scale
 						
 						if edge != storageEdge:
-							gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
+							Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
 		previewStructures.clear()
-
+		
 func CreatePreviewEdge(newPos : Vector3, intersectingEdges : Array):
 	var tempObj = currentEdgePref.instantiate()
 	tempObj.position = newPos
@@ -785,8 +782,8 @@ func CreatePreviewEdge(newPos : Vector3, intersectingEdges : Array):
 		
 	tempObj.scale.x = 0.998
 	
-	gridSys.DuplicateMaterial(tempObj)
-	var objMat = gridSys.GetMaterial(tempObj)
+	Global.gridSys.DuplicateMaterial(tempObj)
+	var objMat = Global.gridSys.GetMaterial(tempObj)
 	objMat.set_transparency(1)
 	objMat.set_cull_mode(0)
 	objMat.set_depth_draw_mode(1)
@@ -806,7 +803,7 @@ func FloorPreview(point : Vector2):
 	var newObj = currentFloorPref.instantiate()
 	newObj.rotation_degrees.y = objectRotation
 	add_child(newObj)
-	var newPoint : Vector2 = gridSys.GlobalToGrid(point)
+	var newPoint : Vector2 = Global.gridSys.GlobalToGrid(point)
 	newObj.position = Vector3(newPoint.x, currentHeight, newPoint.y)
 	previewStruct = newObj
 	
@@ -828,7 +825,7 @@ func FloorPreview(point : Vector2):
 				int(newPoint.x - gridPreviewAxis[0].x),
 				int(newPoint.y - gridPreviewAxis[0].y)
 				)
-			if Vector2(gridPreviewAxis[0].x, gridPreviewAxis[0].y) in gridSys.floorGridDics[currentFloor]:
+			if Vector2(gridPreviewAxis[0].x, gridPreviewAxis[0].y) in Global.gridSys.floorGridDics[currentFloor]:
 				CreatePreviewFloor(
 					Vector3(gridPreviewAxis[0].x, currentHeight, gridPreviewAxis[0].y)
 				)
@@ -843,7 +840,7 @@ func FloorPreview(point : Vector2):
 					newXPos = gridPreviewAxis[0].x - (x + 1)
 				else:
 					newXPos = gridPreviewAxis[0].x + (x + 1)
-				if Vector2(newXPos, gridPreviewAxis[0].y) in gridSys.floorGridDics[currentFloor]:
+				if Vector2(newXPos, gridPreviewAxis[0].y) in Global.gridSys.floorGridDics[currentFloor]:
 					CreatePreviewFloor(
 						Vector3(newXPos, currentHeight, gridPreviewAxis[0].y)
 					)
@@ -854,7 +851,7 @@ func FloorPreview(point : Vector2):
 					newYPos = gridPreviewAxis[0].y - (y + 1)
 				else:
 					newYPos = gridPreviewAxis[0].y + (y + 1)
-				if Vector2(gridPreviewAxis[0].x, newYPos) in gridSys.floorGridDics[currentFloor]:
+				if Vector2(gridPreviewAxis[0].x, newYPos) in Global.gridSys.floorGridDics[currentFloor]:
 					CreatePreviewFloor(
 						Vector3(gridPreviewAxis[0].x, currentHeight, newYPos),
 					)
@@ -871,7 +868,7 @@ func FloorPreview(point : Vector2):
 						newYPos = gridPreviewAxis[0].y - (y + 1)
 					else:
 						newYPos = gridPreviewAxis[0].y + (y + 1)
-					if Vector2(newXPos, newYPos) in gridSys.floorGridDics[currentFloor]:
+					if Vector2(newXPos, newYPos) in Global.gridSys.floorGridDics[currentFloor]:
 						CreatePreviewFloor(
 							Vector3(newXPos, currentHeight, newYPos)
 						)
@@ -891,15 +888,15 @@ func FloorPreview(point : Vector2):
 					newStruct.rotation_degrees = previewStructures[struct]["rotation"]
 					newStruct.position = struct
 					newStruct.add_to_group("Floor")
-					gridSys.DuplicateMaterial(newStruct)
+					Global.gridSys.DuplicateMaterial(newStruct)
 					
-					if gridSys.floorGridDics[currentFloor][gridPos]["floorData"]:
-						floorFloors[currentFloor].erase(gridSys.floorGridDics[currentFloor][gridPos]["floorData"])
-						gridSys.floorGridDics[currentFloor][gridPos]["floorData"].queue_free()
-					gridSys.floorGridDics[currentFloor][gridPos]["floorData"] = newStruct
+					if Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"]:
+						floorFloors[currentFloor].erase(Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"])
+						Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"].queue_free()
+					Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"] = newStruct
 								
 		previewStructures.clear()
-				
+		
 func CreatePreviewFloor(newPos : Vector3):
 	var tempObj = currentFloorPref.instantiate()
 	tempObj.position = newPos
@@ -914,8 +911,8 @@ func CreatePreviewFloor(newPos : Vector3):
 		
 	tempObj.scale.y = 1.02
 	
-	gridSys.DuplicateMaterial(tempObj)
-	var objMat = gridSys.GetMaterial(tempObj)
+	Global.gridSys.DuplicateMaterial(tempObj)
+	var objMat = Global.gridSys.GetMaterial(tempObj)
 	objMat.set_transparency(1)
 	objMat.set_cull_mode(0)
 	objMat.set_depth_draw_mode(1)
@@ -999,35 +996,35 @@ func HighlightCells(size : Vector3, position : Vector2):
 	var canPlace : bool = true
 	
 	for cell in intersectingCells:
-		if gridSys.floorGridDics[currentFloor].has(cell):
-			var floorData = gridSys.floorGridDics[currentFloor][cell]["floorData"]
-			if gridSys.floorGridDics[currentFloor][cell]["floorData"] == null:
+		if Global.gridSys.floorGridDics[currentFloor].has(cell):
+			var floorData = Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
+			if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"] == null:
 				canPlace = false
 				continue
 			else:
-				if gridSys.floorGridDics[currentFloor][cell]["cellData"] == null:
-					gridSys.GetMaterial(floorData).albedo_color = greenCellCol
+				if Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] == null:
+					Global.gridSys.GetMaterial(floorData).albedo_color = greenCellCol
 				else:
-					gridSys.GetMaterial(floorData).albedo_color = redCellCol
+					Global.gridSys.GetMaterial(floorData).albedo_color = redCellCol
 					canPlace = false
 				highlightedCells.append(floorData)
 		else:
 			canPlace = false
 			
 	for edge in intersectingEdges:
-		if gridSys.floorEdgeDics[currentFloor].has(edge):
-			var gridData = gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]
+		if Global.gridSys.floorEdgeDics[currentFloor].has(edge):
+			var gridData = Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]
 			var edgeCells : Array = intersectingEdgeDic[edge]["EdgeCells"]
 			if gridData != null:
 				for edgeCell in edgeCells:
-					if gridSys.floorGridDics[currentFloor].has(edgeCell):
-						var floorData = gridSys.floorGridDics[currentFloor][edgeCell]["floorData"]
+					if Global.gridSys.floorGridDics[currentFloor].has(edgeCell):
+						var floorData = Global.gridSys.floorGridDics[currentFloor][edgeCell]["floorData"]
 						if floorData:
-							gridSys.GetMaterial(floorData).albedo_color = redCellCol
+							Global.gridSys.GetMaterial(floorData).albedo_color = redCellCol
 				canPlace = false
 			for cell in edgeCells:
-				if gridSys.floorGridDics[currentFloor].has(cell):
-					var floorData = gridSys.floorGridDics[currentFloor][cell]["floorData"]
+				if Global.gridSys.floorGridDics[currentFloor].has(cell):
+					var floorData = Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
 					if !highlightedCells.has(floorData) and floorData != null:
 						highlightedCells.append(floorData)
 		else:
@@ -1069,8 +1066,8 @@ func IntersectEdges(size : Vector3, position : Vector2, rotated : bool):
 				edges.append(Vector2(position.x, position.y - (num + 0.5)))
 				
 	for edge in edges:
-		if gridSys.floorEdgeDics[currentFloor].has(edge):
-			if gridSys.floorEdgeDics[currentFloor][edge]["cellData"] != null:
+		if Global.gridSys.floorEdgeDics[currentFloor].has(edge):
+			if Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"] != null:
 				canPlace = false
 		else:
 			canPlace = false
@@ -1078,7 +1075,7 @@ func IntersectEdges(size : Vector3, position : Vector2, rotated : bool):
 	return([edges, canPlace])
 
 func MultiSelectGrid(newPos : Vector2):
-	newPos = gridSys.GlobalToGrid(newPos)
+	newPos = Global.gridSys.GlobalToGrid(newPos)
 	
 	if ogMultiSelectCell.x <= -99:
 		ogMultiSelectCell = Vector2(newPos.x, newPos.y)
@@ -1111,7 +1108,7 @@ func MultiSelectGrid(newPos : Vector2):
 	
 	for xCell in xCells:
 		for yCell in yCells:
-			if Vector2(xCell, yCell) in gridSys.floorGridDics[currentFloor]:
+			if Vector2(xCell, yCell) in Global.gridSys.floorGridDics[currentFloor]:
 				intersectingCells.append(Vector2(xCell, yCell))
 	
 	var intersectingEdges : Array 
@@ -1142,7 +1139,7 @@ func MultiSelectGrid(newPos : Vector2):
 	return [intersectingCells, intersectingEdges]
 	
 func MultiSelectEdge(newPos : Vector2):
-	newPos = gridSys.GlobalToUniversalEdge(newPos)
+	newPos = Global.gridSys.GlobalToUniversalEdge(newPos)
 	
 	if ogMultiSelectEdge.x <= -99:
 		ogMultiSelectEdge = Vector2(newPos.x, newPos.y)
@@ -1177,7 +1174,7 @@ func MultiSelectEdge(newPos : Vector2):
 	
 	for xEdge in xEdges:
 		for yEdge in yEdges:
-			if Vector2(xEdge, yEdge) in gridSys.floorEdgeDics[currentFloor]:
+			if Vector2(xEdge, yEdge) in Global.gridSys.floorEdgeDics[currentFloor]:
 				intersectingEdges.append(Vector2(xEdge, yEdge))
 	
 	return intersectingEdges
@@ -1186,34 +1183,34 @@ func DeleteObjects():
 	for objMesh in objectsToDelete:
 		# Ensure edge objects don't accidentally delete cell objects
 		if objMesh.get_parent().is_in_group("Floor"):
-			var gridPoint : Vector2 = gridSys.GlobalToGrid(Vector2(
+			var gridPoint : Vector2 = Global.gridSys.GlobalToGrid(Vector2(
 				objMesh.get_parent().position.x,
 				objMesh.get_parent().position.z
 			 ))	
-			gridSys.floorGridDics[currentFloor][gridPoint]["floorData"] = null
+			Global.gridSys.floorGridDics[currentFloor][gridPoint]["floorData"] = null
 			floorFloors[currentFloor].erase(objMesh.get_parent())
 		elif objMesh.get_parent().is_in_group("Edge"):
 			var edgePoint : Vector2 
-			edgePoint = gridSys.GlobalToEdge(Vector2(
+			edgePoint = Global.gridSys.GlobalToEdge(Vector2(
 				objMesh.get_parent().position.x, 
 				objMesh.get_parent().position.z), 
 			ObjectRotationCheck(objMesh.get_parent()))
 
-			for edgeToDel in gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
+			for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
 				ResetDicEntry(edgeToDel)
 			ResetDicEntry(edgePoint)
 			floorEdges[currentFloor].erase(objMesh.get_parent())
 		else:
-			var gridPoint : Vector2 = gridSys.GlobalToGrid(Vector2(
+			var gridPoint : Vector2 = Global.gridSys.GlobalToGrid(Vector2(
 				objMesh.get_parent().position.x,
 				objMesh.get_parent().position.z
 			 ))
-			for cellToDel in gridSys.floorGridDics[currentFloor][gridPoint]["cells"]:
+			for cellToDel in Global.gridSys.floorGridDics[currentFloor][gridPoint]["cells"]:
 				ResetDicEntry(cellToDel)
 			
-			if gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"] != null:
-				var edgePoint : Vector2 = gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"]
-				for edgeToDel in gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
+			if Global.gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"] != null:
+				var edgePoint : Vector2 = Global.gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"]
+				for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
 					ResetDicEntry(edgeToDel)
 					
 				ResetDicEntry(edgePoint)
@@ -1230,14 +1227,14 @@ func ResetDicEntry(dicKey : Vector2):
 		edge = true
 		
 	if edge:
-		gridSys.floorEdgeDics[currentFloor][dicKey]["cellData"] = null
-		gridSys.floorEdgeDics[currentFloor][dicKey]["edgeData"] = null
-		gridSys.floorEdgeDics[currentFloor][dicKey]["scale"] = Vector3(1, 1, 1)
-		gridSys.floorEdgeDics[currentFloor][dicKey]["edges"].clear()
+		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["cellData"] = null
+		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["edgeData"] = null
+		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["scale"] = Vector3(1, 1, 1)
+		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["edges"].clear()
 	else:
-		gridSys.floorGridDics[currentFloor][dicKey]["cellData"] = null
-		gridSys.floorGridDics[currentFloor][dicKey]["cells"].clear()
-		gridSys.floorGridDics[currentFloor][dicKey]["storageEdge"] = null
+		Global.gridSys.floorGridDics[currentFloor][dicKey]["cellData"] = null
+		Global.gridSys.floorGridDics[currentFloor][dicKey]["cells"].clear()
+		Global.gridSys.floorGridDics[currentFloor][dicKey]["storageEdge"] = null
 		
 		
 # A function to prevent Z fighting
@@ -1283,7 +1280,7 @@ func ZFightFix(victim : Vector2, dic : Dictionary):
 
 # A function that handles hiding floors when in build/delete mode
 func HideFloors():
-	for floor in gridSys.maxFloor:
+	for floor in Global.gridSys.maxFloor:
 		floor += 1
 		if floor <= currentFloor:
 			for obj in floorObjects[floor]:
