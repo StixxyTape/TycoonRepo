@@ -59,9 +59,6 @@ shape = SubResource("ConcavePolygonShape3D_hmb0b")
 [node name="FrontQueueSpot" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -0.5)
 
-[node name="QueueDirectionSpot" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -0.704482)
-
 [node name="ConveyorPoints" type="Node3D" parent="."]
 
 [node name="StartPoint" type="Node3D" parent="ConveyorPoints"]

@@ -6,8 +6,12 @@ extends Node3D
 @export var pathfindEffort : int = 0
 
 var movingAlongPath : bool = false
+var movingAlongQueuePath : bool = false
 var movingToShelf : bool = false
 var movingToCheckout : bool = false
+
+var queueTargetPos : Vector2
+var movingToQueueSpace : bool = false
 
 var currentPathList : Array = []
 var nextPath : int = 0
@@ -16,6 +20,8 @@ var movementDir : Vector2
 var shelfInteractionSpots : Node3D
 var interactionSpot : Node3D
 
+var lookingForShelf : bool = false
+var lookingForCheckout : bool = false
 
 #endregion
 
@@ -26,21 +32,22 @@ var currentShelf : Node3D
 var currentCheckout : Node3D
 
 var basket : Array = []
-var lookingForShelf : bool = false
-var lookingForCheckout : bool = false
 
 #endregion
 
 func _ready() -> void:
 	get_parent().spotOpenedUp.connect(OpenedShelfSpot)
-	get_parent().checkoutOpenedUp.connect(OpenedCheckoutSpot)
 	AssignShoppingList()
 	ChooseShelf()
 
 func _process(delta: float) -> void:
 	if movingAlongPath:
 		MoveToPath(delta)
-
+	elif movingAlongQueuePath:
+		QueueMoveToPath(delta)
+	elif movingToQueueSpace:
+		MoveToQueueSpace(delta)
+		
 func AssignShoppingList():
 	var categoryAmount : int = randi_range(2, 2)
 	var stockInventory : Dictionary = Global.stockSys.stockInventory
@@ -56,10 +63,6 @@ func AssignShoppingList():
 func OpenedShelfSpot():
 	if lookingForShelf:
 		ChooseShelf()
-
-func OpenedCheckoutSpot():
-	if lookingForCheckout:
-		ChooseCheckout()
 		
 func ChooseShelf():
 	lookingForShelf = true
@@ -94,7 +97,6 @@ func ChooseShelf():
 			if !shelfInteractionSpots.interactionDic[interactionSpot]["Occupied"]:
 				currentShelf = shelfTarget
 				break
-		lookingForShelf = false
 		movingToShelf = true
 		PathFind(Vector2(
 			round(interactionSpot.global_position.x), round(interactionSpot.global_position.z)
@@ -133,10 +135,22 @@ func PathFind(targetPos : Vector2):
 	var effort : int = pathfindEffort
 		
 	if gridDic[targetPos]["cellData"] != null or gridDic[targetPos]["floorData"] == null:
+		# If we can't reach the checkout, erase ourselves from it's list
+		if movingToCheckout:
+			currentCheckout.customerQueueList.erase(self)
 		return
 	if startingPos == targetPos:
 		movingAlongPath = true
 		currentPathList = []
+		
+		if movingToShelf:
+			lookingForShelf = false
+			shelfInteractionSpots.SetInteractionSpot(interactionSpot, true)
+		if movingToCheckout:
+			lookingForCheckout = false
+			movingAlongPath = false
+			movingAlongQueuePath = true
+			
 		return
 		
 	# A* from currentPos to target
@@ -180,10 +194,13 @@ func PathFind(targetPos : Vector2):
 		if abs(targetPos - currentTile) == Vector2.ZERO:
 			break
 		
-	# Set the spot to occupied because we now know we can reach it
+	# Set these spots to occupied because we now know we can reach them
 	if movingToShelf:
+		lookingForShelf = false
 		shelfInteractionSpots.SetInteractionSpot(interactionSpot, true)
-	
+	if movingToCheckout:
+		lookingForCheckout = false
+		
 	var pathList : Array = [currentTile]
 	
 	var diagonalWallNeighbours : Array = [
@@ -221,19 +238,21 @@ func PathFind(targetPos : Vector2):
 			
 	pathList.reverse()
 	
-	movingAlongPath = true
+	if movingToCheckout:
+		movingAlongQueuePath = true
+	else:
+		movingAlongPath = true
+	
 	currentPathList = pathList
-
+	
 func MoveToPath(delta : float):
-	if (currentPathList.size() == 0 
+	if (nextPath == currentPathList.size()
 	or Vector2(position.x, position.z).distance_to(currentPathList[currentPathList.size() - 1]) <= pathfindRange):
 		movingAlongPath = false
 		if movingToShelf:
+			rotation_degrees.y = -currentShelf.rotation_degrees.y + 90
 			AddToBasket()
-		elif movingToCheckout:
-			Checkout()
 		movingToShelf = false
-		movingToCheckout = false
 		return
 	if Vector2(position.x, position.z).distance_to(currentPathList[nextPath]) <= pathfindRange:
 		nextPath += 1
@@ -295,24 +314,69 @@ func ChooseCheckout():
 	if checkoutArray.size() > 0:
 		var availableCheckouts : Array = []
 		for checkout in checkoutArray:
-			if !checkout.get_node("QueueSpot").occupied:
-				availableCheckouts.append(checkout)
+			availableCheckouts.append(checkout)
 						
 		if availableCheckouts.size() <= 0:
 			return
 		
 		currentCheckout = availableCheckouts[randi_range(0, availableCheckouts.size() - 1)]
-		var checkoutTarget : Node3D = currentCheckout.get_node("QueueSpot")
+		currentCheckout.customerQueueList.append(self)
+		currentCheckout.UpdateQueue()
 		
-		lookingForCheckout = false
+		#print(currentCheckout.customerQueueList)
+		#print(currentCheckout.queueSpotList)
+		var checkoutTarget : Vector2 = currentCheckout.queueSpotList[
+			currentCheckout.customerQueueList.find(self)
+		]
+		
 		movingToCheckout = true
 		
-		currentCheckout.get_node("QueueSpot").occupied = true
-		
-		PathFind(Vector2(
-			round(checkoutTarget.global_position.x), round(checkoutTarget.global_position.z)
-			))
+		queueTargetPos = checkoutTarget
+		PathFind(round(queueTargetPos))
 
+func QueueMoveToPath(delta : float):
+	if (nextPath == currentPathList.size() - 1
+	or Vector2(position.x, position.z).distance_to(currentPathList[currentPathList.size() - 1]) <= pathfindRange):
+		movingAlongQueuePath = false
+		movingToCheckout = false
+		currentCheckout.queueUpdated.connect(WaitInQueue)
+		WaitInQueue()
+		return
+	if Vector2(position.x, position.z).distance_to(currentPathList[nextPath]) <= pathfindRange:
+		nextPath += 1
+		movementDir = (currentPathList[nextPath] - Vector2(position.x, position.z)).normalized()
+		look_at(Vector3(currentPathList[nextPath].x, 0, currentPathList[nextPath].y))
+	else:
+		position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
+		
+func WaitInQueue():
+	var checkoutTarget : Vector2 = currentCheckout.queueSpotList[
+			currentCheckout.customerQueueList.find(self)
+		]
+	queueTargetPos = checkoutTarget
+	
+	var lookSpot : Vector3 = Vector3(queueTargetPos.x, 0, queueTargetPos.y)
+	if currentCheckout.queueSpotList.size() >= 1:
+		var nextQueuePos : Vector2 = currentCheckout.queueSpotList[
+			currentCheckout.queueSpotList.find(queueTargetPos) - 1
+		]
+		lookSpot = Vector3(nextQueuePos.x, 0, nextQueuePos.y)
+		
+	look_at(lookSpot)
+	movementDir = (queueTargetPos - Vector2(position.x, position.z)).normalized()
+	movingToQueueSpace = true
+	
+func MoveToQueueSpace(delta : float):
+	if Vector2(position.x, position.z).distance_to(queueTargetPos) <= pathfindRange:
+		movingToQueueSpace = false
+		if queueTargetPos == currentCheckout.queueSpotList[0]:
+			currentCheckout.queueUpdated.disconnect(WaitInQueue)
+			rotation_degrees.y = -currentCheckout.rotation_degrees.y + 90
+			Checkout()
+		return
+	else:
+		position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
+	
 func Checkout():
 	while basket.size() > 0:
 		var checkoutItem = basket[randi_range(0, basket.size() - 1)]
@@ -322,7 +386,5 @@ func Checkout():
 		
 		await currentCheckout.scanned
 	
-	currentCheckout.get_node("QueueSpot").occupied = false
-	get_parent().checkoutOpenedUp.emit()
-	
+	currentCheckout.MoveQueue()
 	queue_free()

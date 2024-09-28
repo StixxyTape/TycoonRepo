@@ -6,9 +6,6 @@ var customerPref : PackedScene = preload("res://Customers/Customer.tscn")
 # For customers to check if there's an available spot everytime one opens up
 signal spotOpenedUp 
 
-# When a customer finishes using registers, alert other customers it's available
-signal checkoutOpenedUp
-
 func _ready() -> void:
 	Global.spawnCustomerSignal.connect(SpawnCustomer)
 	
