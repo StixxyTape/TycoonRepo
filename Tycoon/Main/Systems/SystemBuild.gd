@@ -67,6 +67,12 @@ var longShelfPref : PackedScene = preload("res://Models/Building/Shelving/LongSh
 
 
 var basicShelfPref : PackedScene = preload("res://Shelves/BasicShelf.tscn")
+
+#endregion
+
+#region Facilities
+var basicCheckoutPref : PackedScene = preload("res://Facilities/Checkouts/BasicCheckout.tscn")
+
 #endregion
 
 #region Delete Mode
@@ -181,7 +187,11 @@ func InputManager():
 			Global.gridSys.maxFloor * Global.gridSys.wallHeight
 		)
 		HideFloors()
-
+	
+	if Input.is_action_just_pressed("CheckoutPlace_Temp"):
+		currentCellPref = basicCheckoutPref
+		currentCellPreviewPref = basicCheckoutPref
+	
 func ResetEverything():
 	ResetDeletionCells()
 	ResetDeletionObj()
@@ -568,12 +578,16 @@ func CellPreview(point : Vector2):
 					previewStructures[struct]["previewObj"].queue_free()
 				
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
-					
 					var newStruct = currentCellPref.instantiate()
+					
+					# To group certain structures
 					if newStruct.is_in_group("Shelf"):
 						get_node("Shelves").add_child(newStruct)
+					elif newStruct.is_in_group("Checkout"):
+						get_node("Checkouts").add_child(newStruct)
 					else:
 						add_child(newStruct)
+						
 					floorObjects[currentFloor].append(newStruct)
 					newStruct.rotation_degrees = previewStructures[struct]["rotation"]
 					newStruct.position = struct

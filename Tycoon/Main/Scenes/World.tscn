@@ -42,6 +42,8 @@ script = ExtResource("2_3biuo")
 
 [node name="Shelves" type="Node3D" parent="BuildSystem"]
 
+[node name="Checkouts" type="Node3D" parent="BuildSystem"]
+
 [node name="StockSystem" type="Node3D" parent="."]
 script = ExtResource("3_eiyql")
 

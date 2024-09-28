@@ -41,7 +41,8 @@ func EstablishStockInventory():
 	stockInventory[001] = {
 		"name" : "Canned Goods",
 		"amount" : 999,
-		"category" : "Food"
+		"category" : "Food",
+		"prefab" : preload("res://Models/Stock/CannedGood.gltf")
 	}
 	stockInventory[002] = {
 		"name" : "Fresh Produce",
@@ -56,7 +57,8 @@ func EstablishStockInventory():
 	stockInventory[004] = {
 		"name" : "Drinks",
 		"amount" : 999,
-		"category" : "Drink"
+		"category" : "Drink",
+		"prefab" : preload("res://Models/Stock/Drink.gltf")
 	}
 
 # A function that handles raycasting to the 3D grid and logic for deleting/building
@@ -125,14 +127,12 @@ func StockShelf(item : int, shelf : Node3D):
 	var itemsToStock = shelf.GetShelfState().maxStock - shelf.GetShelfState().currentStock
 	var itemsAvailableToStock = stockInventory[item]["amount"]
 	
-	var prevStockType = shelf.stockType
-	
 	if shelf.updating:
 		return 
 		
 	if shelf.stockType == 0:
 		shelf.stockType = item 
-		shelf.AutoStockCheck(prevStockType)
+		shelf.AutoStockCheck()
 		itemsToStock = shelf.GetShelfState().maxStock - shelf.GetShelfState().currentStock
 		StockCalc(item, shelf, itemsToStock, itemsAvailableToStock)
 		
@@ -142,7 +142,7 @@ func StockShelf(item : int, shelf : Node3D):
 		else:
 			stockInventory[shelf.stockType]["amount"] += shelf.GetShelfState().currentStock
 			shelf.stockType = item 
-			shelf.AutoStockCheck(prevStockType)
+			shelf.AutoStockCheck()
 			shelf.GetShelfState().currentStock = 0
 			itemsToStock = shelf.GetShelfState().maxStock
 			StockCalc(item, shelf, itemsToStock, itemsAvailableToStock)

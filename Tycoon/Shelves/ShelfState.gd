@@ -4,33 +4,40 @@ extends Node3D
 ## stock positions are automatically assigned
 ## by calculating the width of the shelf
 @export var autoStock : bool = false
-@export var stockPref : PackedScene 
+#@export var stockPref : PackedScene 
 
 @export var maxStock : int = 10
 @export var currentStock : int = 0
 
 @export var objBuffer : float = 0.2
 
+var stockPref : PackedScene
+
 var stockDic : Dictionary = {}
-var zSlots : Array = []
-var horizontalSlots : Array = []
-var verticalSlots : Array = []
+var zSlots : Array
+var horizontalSlots : Array 
+var verticalSlots : Array 
 
 var rowAmount : int
 var rowsAmount : int
 var columnAmount : int
 
 func AutoStock():
+	
+	zSlots = []
+	horizontalSlots = []
+	verticalSlots = []
+	
 	rowAmount = 0
 	rowsAmount = 1
 	columnAmount = 1
 	
 	var objRot = get_node(
-			"../../../../ShelfLevels"
+			"../../../ShelfLevels"
 			).get_parent().rotation_degrees.y
 			
 	var collider : CollisionShape3D = get_node(
-			"../../StaticBody3D"
+			"../StaticBody3D"
 			).get_child(0)
 			
 	var newObj = stockPref.instantiate()
@@ -121,7 +128,7 @@ func AutoStock():
 	maxStock = stockDic.size()
 	
 func ChangeStock():
-	get_parent().get_parent().updating = true
+	get_parent().updating = true
 	for obj in currentStock:
 		for entry in stockDic:
 			if stockDic[entry]["object"] == null:
@@ -130,13 +137,15 @@ func ChangeStock():
 				add_child(stockDic[entry]["object"])
 				stockDic[entry]["object"].position = entry
 				break
-	get_parent().get_parent().updating = false
+	get_parent().updating = false
 
 func ClearStock():
 	for entry in stockDic:
 		if stockDic[entry]["object"] != null:
 			stockDic[entry]["object"].queue_free()
 			stockDic[entry]["object"] = null
+	
+	stockDic.clear()
 
 # When customers grab from the shelf
 func CustomerUpdateStock(amountTaken : int):

@@ -5,7 +5,12 @@ extends Node3D
 func UpdateOverview():
 	categories.clear()
 	for child in get_node("ShelfLevels").get_children():
-		if child.stockType != 000 and Global.stockSys.stockInventory[child.stockType]["category"] not in categories:
-			categories[Global.stockSys.stockInventory[child.stockType]["category"]] = {
-				"currentStock" : child.GetShelfState().currentStock
-			}
+		if child.stockType != 000: 
+			if Global.stockSys.stockInventory[child.stockType]["category"] not in categories:
+				categories[Global.stockSys.stockInventory[child.stockType]["category"]] = {
+					"currentStock" : child.GetShelfState().currentStock
+				}
+			else:
+				categories[
+					Global.stockSys.stockInventory[child.stockType]["category"]
+					]["currentStock"] += child.GetShelfState().currentStock

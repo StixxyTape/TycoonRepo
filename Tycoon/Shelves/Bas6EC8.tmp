@@ -91,6 +91,9 @@ shape = SubResource("BoxShape3D_eb44a")
 [node name="ShelfState" type="Node3D" parent="ShelfLevels/ShelfLevel"]
 script = ExtResource("6_40kqj")
 autoStock = true
+maxStock = null
+currentStock = null
+objBuffer = null
 
 [node name="ShelfLevel2" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
 script = ExtResource("1_an73w")
@@ -103,10 +106,6 @@ collision_mask = 8
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.096, 0.565442, 0)
 shape = SubResource("BoxShape3D_8cuqv")
 
-[node name="ShelfState" type="Node3D" parent="ShelfLevels/ShelfLevel2"]
-script = ExtResource("6_40kqj")
-autoStock = true
-
 [node name="ShelfLevel3" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
 script = ExtResource("1_an73w")
 
@@ -118,10 +117,6 @@ collision_mask = 8
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.928385, 0)
 shape = SubResource("BoxShape3D_pr757")
 
-[node name="ShelfState" type="Node3D" parent="ShelfLevels/ShelfLevel3"]
-script = ExtResource("6_40kqj")
-autoStock = true
-
 [node name="ShelfLevel4" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
 script = ExtResource("1_an73w")
 
@@ -132,10 +127,6 @@ collision_mask = 8
 [node name="CollisionShape3D4" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel4/StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0544943, 1.27284, 0)
 shape = SubResource("BoxShape3D_palvs")
-
-[node name="ShelfState" type="Node3D" parent="ShelfLevels/ShelfLevel4"]
-script = ExtResource("6_40kqj")
-autoStock = true
 
 [node name="InteractionSpots" type="Node3D" parent="."]
 script = ExtResource("5_2a0hp")

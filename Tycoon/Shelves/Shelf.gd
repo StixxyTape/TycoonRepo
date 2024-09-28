@@ -2,18 +2,15 @@ extends Node
 
 var stockType : int = 000
 var updating : bool = false
-
-func _ready() -> void:
-	add_child(get_node("../../ShelfStates").duplicate())
 				
 func GetShelfState():
-	return get_node("ShelfStates/" + Global.stockSys.stockInventory[stockType]["name"])
+	return get_node("ShelfState")
 
-func AutoStockCheck(item : int):
-	if item != stockType:
-		get_node("ShelfStates/" + Global.stockSys.stockInventory[item]["name"]).ClearStock()
-	if get_node("ShelfStates/" + Global.stockSys.stockInventory[stockType]["name"]).autoStock:
-		get_node("ShelfStates/" + Global.stockSys.stockInventory[stockType]["name"]).AutoStock()
+func AutoStockCheck():
+	GetShelfState().ClearStock()
+	if GetShelfState().autoStock:
+		GetShelfState().stockPref = Global.stockSys.stockInventory[stockType]["prefab"]
+		GetShelfState().AutoStock()
 
 func ChangeStock():
 	GetShelfState().ChangeStock()

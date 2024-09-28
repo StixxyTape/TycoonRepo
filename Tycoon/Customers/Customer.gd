@@ -6,6 +6,8 @@ extends Node3D
 @export var pathfindEffort : int = 0
 
 var movingAlongPath : bool = false
+var movingToShelf : bool = false
+var movingToCheckout : bool = false
 
 var currentPathList : Array = []
 var nextPath : int = 0
@@ -14,25 +16,31 @@ var movementDir : Vector2
 var shelfInteractionSpots : Node3D
 var interactionSpot : Node3D
 
-var currentShelf : Node3D
 
 #endregion
 
 #region Shopping
 @export var shoppingCategories : Dictionary 
-var basket : Array = []
 
+var currentShelf : Node3D
+var currentCheckout : Node3D
+
+var basket : Array = []
+var lookingForShelf : bool = false
+var lookingForCheckout : bool = false
 
 #endregion
 
 func _ready() -> void:
+	get_parent().spotOpenedUp.connect(OpenedShelfSpot)
+	get_parent().checkoutOpenedUp.connect(OpenedCheckoutSpot)
 	AssignShoppingList()
 	ChooseShelf()
 
 func _process(delta: float) -> void:
 	if movingAlongPath:
 		MoveToPath(delta)
-	
+
 func AssignShoppingList():
 	var categoryAmount : int = randi_range(2, 2)
 	var stockInventory : Dictionary = Global.stockSys.stockInventory
@@ -45,8 +53,16 @@ func AssignShoppingList():
 			}
 			categoryAmount -= 1
 	
-	
+func OpenedShelfSpot():
+	if lookingForShelf:
+		ChooseShelf()
+
+func OpenedCheckoutSpot():
+	if lookingForCheckout:
+		ChooseCheckout()
+		
 func ChooseShelf():
+	lookingForShelf = true
 	var shelfArray = Global.buildSys.get_node("Shelves").get_children()
 	if shelfArray.size() > 0:
 		var availableShelves : Array = []
@@ -65,7 +81,6 @@ func ChooseShelf():
 						break
 						
 		if availableShelves.size() <= 0:
-			print("huh")
 			return
 			
 		var shelfTarget : Node3D
@@ -79,10 +94,13 @@ func ChooseShelf():
 			if !shelfInteractionSpots.interactionDic[interactionSpot]["Occupied"]:
 				currentShelf = shelfTarget
 				break
+		lookingForShelf = false
+		movingToShelf = true
 		PathFind(Vector2(
 			round(interactionSpot.global_position.x), round(interactionSpot.global_position.z)
 			))
 		
+	
 func PathFind(targetPos : Vector2):
 	# Reset these variables
 	currentPathList.clear()
@@ -113,13 +131,14 @@ func PathFind(targetPos : Vector2):
 	var directionDic : Dictionary = {}
 	
 	var effort : int = pathfindEffort
-	
+		
 	if gridDic[targetPos]["cellData"] != null or gridDic[targetPos]["floorData"] == null:
 		return
 	if startingPos == targetPos:
+		movingAlongPath = true
+		currentPathList = []
 		return
-	
-	
+		
 	# A* from currentPos to target
 	while true:
 		for offset in neighbourOffsets:
@@ -160,9 +179,10 @@ func PathFind(targetPos : Vector2):
 		priorityQueue.erase(priorityQueue.min())
 		if abs(targetPos - currentTile) == Vector2.ZERO:
 			break
-	
+		
 	# Set the spot to occupied because we now know we can reach it
-	shelfInteractionSpots.SetInteractionSpot(interactionSpot, true)
+	if movingToShelf:
+		shelfInteractionSpots.SetInteractionSpot(interactionSpot, true)
 	
 	var pathList : Array = [currentTile]
 	
@@ -205,9 +225,15 @@ func PathFind(targetPos : Vector2):
 	currentPathList = pathList
 
 func MoveToPath(delta : float):
-	if currentPathList.size() == 0 or Vector2(position.x, position.z).distance_to(currentPathList[currentPathList.size() - 1]) <= pathfindRange:
+	if (currentPathList.size() == 0 
+	or Vector2(position.x, position.z).distance_to(currentPathList[currentPathList.size() - 1]) <= pathfindRange):
 		movingAlongPath = false
-		AddToBasket()
+		if movingToShelf:
+			AddToBasket()
+		elif movingToCheckout:
+			Checkout()
+		movingToShelf = false
+		movingToCheckout = false
 		return
 	if Vector2(position.x, position.z).distance_to(currentPathList[nextPath]) <= pathfindRange:
 		nextPath += 1
@@ -217,9 +243,18 @@ func MoveToPath(delta : float):
 		position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
 
 func AddToBasket():
-	for child in currentShelf.get_node("ShelfLevels").get_children():
+	var availableShelfLevels : Array = currentShelf.get_node("ShelfLevels").get_children()
+	var pickedShelfLevels : Array = []
+	for child in availableShelfLevels:
+		
+		#Picks a random shelflevel
+		child = availableShelfLevels[randi_range(0, availableShelfLevels.size() - 1)]
+		while child in pickedShelfLevels:
+			child = availableShelfLevels[randi_range(0, availableShelfLevels.size() - 1)]
+		pickedShelfLevels.append(child)
 		if child.stockType == 000:
 			continue
+			
 		var category = Global.stockSys.stockInventory[child.stockType]["category"]
 		if category in shoppingCategories:
 			if child.GetShelfState().currentStock > 0 and !shoppingCategories[category]["addedToBasket"]:
@@ -234,7 +269,7 @@ func AddToBasket():
 					#print("What I got when it had more: ", shoppingCategories[category]["amountToAdd"])
 				else:
 					var oldStockAmount : int = child.GetShelfState().currentStock
-					child.GetShelfState().currentStock -= child.GetShelfState().currentStock
+					child.GetShelfState().currentStock = 0
 					for x in oldStockAmount:
 						await get_tree().create_timer(.1).timeout
 						child.CustomerUpdate(1)
@@ -245,10 +280,49 @@ func AddToBasket():
 		child.CustomerUpdate(0)
 		
 	shelfInteractionSpots.SetInteractionSpot(interactionSpot, false)
+	get_parent().spotOpenedUp.emit()
 	
 	for category in shoppingCategories:
 		if !shoppingCategories[category]["addedToBasket"]:
-			print("honk")
 			ChooseShelf()
 			return
+			
+	ChooseCheckout()
+	
+func ChooseCheckout():
+	lookingForCheckout = true
+	var checkoutArray = Global.buildSys.get_node("Checkouts").get_children()
+	if checkoutArray.size() > 0:
+		var availableCheckouts : Array = []
+		for checkout in checkoutArray:
+			if !checkout.get_node("QueueSpot").occupied:
+				availableCheckouts.append(checkout)
+						
+		if availableCheckouts.size() <= 0:
+			return
+		
+		currentCheckout = availableCheckouts[randi_range(0, availableCheckouts.size() - 1)]
+		var checkoutTarget : Node3D = currentCheckout.get_node("QueueSpot")
+		
+		lookingForCheckout = false
+		movingToCheckout = true
+		
+		currentCheckout.get_node("QueueSpot").occupied = true
+		
+		PathFind(Vector2(
+			round(checkoutTarget.global_position.x), round(checkoutTarget.global_position.z)
+			))
+
+func Checkout():
+	while basket.size() > 0:
+		var checkoutItem = basket[randi_range(0, basket.size() - 1)]
+		basket.erase(checkoutItem)
+		
+		currentCheckout.Scan(checkoutItem)
+		
+		await currentCheckout.scanned
+	
+	currentCheckout.get_node("QueueSpot").occupied = false
+	get_parent().checkoutOpenedUp.emit()
+	
 	queue_free()

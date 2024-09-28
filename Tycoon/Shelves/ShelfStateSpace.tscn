@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://l4plerom2cpi"]
-
-[ext_resource type="Script" path="res://Shelves/ShelfStateSpace.gd" id="1_flqfu"]
-
-[node name="ShelfStateSpace" type="Node3D"]
-script = ExtResource("1_flqfu")
