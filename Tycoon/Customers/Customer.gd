@@ -325,6 +325,8 @@ func ChooseCheckout():
 		
 		#print(currentCheckout.customerQueueList)
 		#print(currentCheckout.queueSpotList)
+		#print(currentCheckout.queueCellsList)
+		
 		var checkoutTarget : Vector2 = currentCheckout.queueSpotList[
 			currentCheckout.customerQueueList.find(self)
 		]
@@ -335,7 +337,7 @@ func ChooseCheckout():
 		PathFind(round(queueTargetPos))
 
 func QueueMoveToPath(delta : float):
-	if (nextPath == currentPathList.size() - 1
+	if (nextPath == currentPathList.size() - 1 or currentPathList.size() == 0
 	or Vector2(position.x, position.z).distance_to(currentPathList[currentPathList.size() - 1]) <= pathfindRange):
 		movingAlongQueuePath = false
 		movingToCheckout = false

@@ -1,7 +1,7 @@
 extends Node3D
 
-@export var scanTime : float = .3
-@export var queueGap : float = .4
+@export var scanTime : float = 50
+@export var queueGap : float = .7
 
 @onready var startPoint : Vector3 = $ConveyorPoints/StartPoint.position
 @onready var endPoint : Vector3 = $ConveyorPoints/EndPoint.position
@@ -10,6 +10,7 @@ var itemTween : Tween
 
 var customerQueueList : Array = []
 var queueSpotList : Array = []
+var queueCellsList : Array = []
 
 # When an item finishes scanning, emit this signal
 signal scanned
@@ -39,28 +40,107 @@ func Scan(stockType : int):
 
 func UpdateQueue():
 	queueSpotList.clear()
-	var queueCount : int = 1
+	queueCellsList.clear()
+	
 	for customer in customerQueueList:
 		if queueSpotList.size() <= 0:
 			queueSpotList.append(Vector2($FrontQueueSpot.global_position.x, $FrontQueueSpot.global_position.z))
+			queueCellsList.append(round(
+				Vector2($FrontQueueSpot.global_position.x, $FrontQueueSpot.global_position.z)))
 			continue
 		
-		var queueDirection : Vector2 = (
+		var baseQueueDirection : Vector2 = (
 			Vector2($QueueDirectionSpot.global_position.x, $QueueDirectionSpot.global_position.z)
 			- Vector2($FrontQueueSpot.global_position.x, $FrontQueueSpot.global_position.z)).normalized()
 		
-			
-		var gapBuffer : Vector2 
-		gapBuffer.x = (queueGap * queueCount) * queueDirection.x
-		gapBuffer.y = (queueGap * queueCount) * queueDirection.y
+		var queueDirection : Vector2 = baseQueueDirection
 	
-		print("\n", queueDirection.x)
-		print(ceil(queueDirection.x))
-		print(queueDirection.normalized())
+		if queueSpotList.size() >= 2:
+			queueDirection = (
+			queueSpotList[queueSpotList.size() - 1] - queueSpotList[queueSpotList.size() - 2]
+			).normalized()
 		
-		queueSpotList.append(Vector2(queueSpotList[0].x, queueSpotList[0].y) + gapBuffer)
+		var gapBuffer : Vector2 
+		gapBuffer.x = queueGap * queueDirection.x
+		gapBuffer.y = queueGap * queueDirection.y
+	
+		#print("\n", queueDirection.x)
+		#print(ceil(queueDirection.x))
+		#print(queueDirection.normalized())
+		
+		var newSpot : Vector2 = Vector2(
+			queueSpotList[queueSpotList.size() - 1].x, 
+			queueSpotList[queueSpotList.size() - 1].y) + gapBuffer
+		
+		var neighbourOffsets = [queueDirection,
+						Vector2(queueDirection.y, -queueDirection.x),
+						Vector2(-queueDirection.y, queueDirection.x),
+						-queueDirection
+						]
 			
-		queueCount += 1
+		var unavailableSpot : bool = false
+		
+		if round(newSpot) not in queueCellsList:
+			if round(newSpot) not in Global.gridSys.gridDic:
+				unavailableSpot = true
+			elif (round(newSpot) in Global.gridSys.gridDic
+			and (Global.gridSys.gridDic[round(newSpot)]["floorData"] == null
+			or Global.gridSys.gridDic[round(newSpot)]["cellData"] != null)):
+				unavailableSpot = true
+			
+			var edgeToCheck : Vector2 = (round(newSpot) + queueCellsList[queueCellsList.size() - 1]) / 2
+			
+			if edgeToCheck not in Global.gridSys.edgeDic:
+				unavailableSpot = true
+			elif (edgeToCheck in Global.gridSys.edgeDic #
+			and Global.gridSys.edgeDic[edgeToCheck]["edgeData"] != null):
+				unavailableSpot = true
+			if !unavailableSpot:
+				queueSpotList.append(newSpot)
+				queueCellsList.append(round(newSpot))
+		else:
+			queueSpotList.append(newSpot)
+		
+		if unavailableSpot:
+			newSpot -= gapBuffer
+			var spotFound : bool = false
+			for offset in neighbourOffsets:
+				var spotToCheck : Vector2 = newSpot + (offset * queueGap)
+				var newAvailableSpot : bool = true
+				if offset == queueDirection or offset == -queueDirection:
+					continue
+				if round(spotToCheck) in queueCellsList:
+					queueSpotList.append(spotToCheck)
+					spotFound = true
+					break
+				else:
+					if round(spotToCheck) not in Global.gridSys.gridDic:
+						newAvailableSpot = false
+					elif (round(spotToCheck) in Global.gridSys.gridDic
+					and (Global.gridSys.gridDic[round(spotToCheck)]["floorData"] == null
+					or Global.gridSys.gridDic[round(spotToCheck)]["cellData"] != null)):
+						newAvailableSpot = false
+					
+					var edgeToCheck : Vector2 = (
+						round(spotToCheck) + queueCellsList[queueCellsList.size() - 1]
+						) / 2
+					
+					if edgeToCheck not in Global.gridSys.edgeDic:
+						newAvailableSpot = false
+					elif (edgeToCheck in Global.gridSys.edgeDic #
+					and Global.gridSys.edgeDic[edgeToCheck]["edgeData"] != null):
+						newAvailableSpot = false
+				
+				if newAvailableSpot:
+					spotFound = true
+					queueCellsList.append(round(spotToCheck))
+					queueSpotList.append(spotToCheck)
+					break
+			
+			if !spotFound:
+				queueCellsList.append(round(newSpot + gapBuffer))
+				queueSpotList.append(newSpot + gapBuffer)
+		
 	
 	queueUpdated.emit()
 	
