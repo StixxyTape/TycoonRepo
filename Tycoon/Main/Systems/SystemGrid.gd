@@ -43,7 +43,8 @@ func EstablishGrid():
 				"floorData" : null,
 				"cellData" : null,
 				"cells" : [],
-				"storageEdge" : null
+				"storageEdge" : null,
+				"interactionSpot" : 0
 			}
 			
 			# Visualise Grid
@@ -68,7 +69,9 @@ func EstablishGrid():
 					"scale" : Vector3(1, 1, 1),
 					"edgeData" : null,
 					"cellData" : null,
-					"edges" : []
+					"edges" : [],
+					"interactionEdges" : [],
+					"interactionEdge" : 0
 				}
 	floorEdgeDics.append(edgeDic)
 	
@@ -87,7 +90,8 @@ func EstablishGrid():
 					"floorData" : null,
 					"cellData" : null,
 					"cells" : [],
-					"storageEdge" : null
+					"storageEdge" : null,
+					"interactionSpot" : 0
 				}
 			
 		floorGridDics.append(newGridDic)
@@ -103,7 +107,9 @@ func EstablishGrid():
 						"scale" : Vector3(1, 1, 1),
 						"edgeData" : null,
 						"cellData" : null,
-						"edges" : []
+						"edges" : [],
+						"interactionEdges" : [],
+						"interactionEdge" : 0
 					}
 	
 		floorEdgeDics.append(newEdgeDic)

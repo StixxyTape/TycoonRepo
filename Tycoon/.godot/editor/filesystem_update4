@@ -4,8 +4,8 @@ res://Shelves/ShelfState.gd
 res://Models/Building/Structure/FloorTile/FloorMat.tres
 res://Models/Building/Structure/WallTile/WallMat.tres
 res://Models/Building/Structure/DoubleDoor/DoubleDoorMat.tres
-res://Customers/Customer.tscn
 res://Shelves/BasicShelf.tscn
+res://Main/Systems/SystemBuild.gd
+res://Customers/Customer.tscn
 res://Main/Scenes/World.tscn
-res://Facilities/Checkouts/Checkout.gd
-res://Customers/Customer.gd
+res://Main/Systems/SystemGrid.gd

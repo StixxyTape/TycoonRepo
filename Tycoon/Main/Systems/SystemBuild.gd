@@ -20,7 +20,7 @@ var buildMode : int = 0
 var objectRotation : int = 0
 
 var currentCellPref : PackedScene
-var currentCellPreviewPref : PackedScene
+#var currentCellPreviewPref : PackedScene
 var currentEdgePref : PackedScene
 var currentFloorPref : PackedScene
 
@@ -110,7 +110,7 @@ func _ready() -> void:
 	Global.switchSignal.connect(ResetEverything)
 	
 	currentCellPref = basicShelfPref
-	currentCellPreviewPref = basicShelfPreview
+	#currentCellPreviewPref = basicShelfPref
 	currentEdgePref = wallPref
 	currentFloorPref = floorPref
 	
@@ -190,7 +190,7 @@ func InputManager():
 	
 	if Input.is_action_just_pressed("CheckoutPlace_Temp"):
 		currentCellPref = basicCheckoutPref
-		currentCellPreviewPref = basicCheckoutPref
+		#currentCellPreviewPref = basicCheckoutPref
 	
 func ResetEverything():
 	ResetDeletionCells()
@@ -450,9 +450,9 @@ func CellPreview(point : Vector2):
 
 	ResetHighlightedCells()
 	
-	
 	# We spawn in the object and set it's rotation for an accurate size calc
-	var newObj = currentCellPreviewPref.instantiate()
+	#var newObj = currentCellPreviewPref.instantiate()
+	var newObj = currentCellPref.instantiate()
 	newObj.rotation_degrees.y = objectRotation
 	add_child(newObj)
 	
@@ -470,9 +470,15 @@ func CellPreview(point : Vector2):
 		Vector2(newPoint.x, newPoint.z)
 		)
 	
-	var newGridPoint : Vector2 = Vector2(newPoint.x, newPoint.z)
 	var objectCells : Array = objIntersection[0]
 	var objectEdges : Array = objIntersection[1]
+	
+	HighlightInteractionSpots(
+		objectCells,
+		newObj
+	)
+	
+	var newGridPoint : Vector2 = Vector2(newPoint.x, newPoint.z)
 	
 	if Input.is_action_pressed("Place"):
 		newObj.visible = false
@@ -494,11 +500,14 @@ func CellPreview(point : Vector2):
 				int(newPoint.z - gridPreviewAxis[0].y)
 				)
 			var originalIntersections : Array = HighlightCells(
-						newObjSize, 
-						Vector2(gridPreviewAxis[0].x, gridPreviewAxis[0].y)
-						)
+				newObjSize, 
+				Vector2(gridPreviewAxis[0].x, gridPreviewAxis[0].y)
+				)
+			
+			# If the original shelf is placed in an incorrect position
 			if !originalIntersections[2]:
 				return
+				
 			CreatePreviewStruct(
 				Vector3(gridPreviewAxis[0].x, currentHeight, gridPreviewAxis[0].y),
 				[objectCells, objectEdges]
@@ -565,6 +574,7 @@ func CellPreview(point : Vector2):
 							)
 						if !previewIntersections[2]:
 							continue
+							
 						CreatePreviewStruct(
 							Vector3(newXPos, currentHeight, newYPos),
 							[previewIntersections[0], previewIntersections[1]]
@@ -576,7 +586,22 @@ func CellPreview(point : Vector2):
 			for struct in previewStructures:
 				if is_instance_valid(previewStructures[struct]["previewObj"]):
 					previewStructures[struct]["previewObj"].queue_free()
-				
+					
+					#For clearing space for interaction spots
+					if !previewStructures[struct]["interactionCanPlace"]:
+						continue
+					var blockingInteractionSpot : bool = false
+					for cell in previewStructures[struct]["cells"]:
+						if Global.gridSys.floorGridDics[currentFloor][cell]["interactionSpot"] > 0:
+							blockingInteractionSpot = true
+							break
+					for cell in previewStructures[struct]["interactionCells"]:
+						if Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] != null:
+							blockingInteractionSpot = true
+							break
+					if blockingInteractionSpot:
+						continue
+							
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newStruct = currentCellPref.instantiate()
 					
@@ -595,6 +620,12 @@ func CellPreview(point : Vector2):
 					# The cell that stores the rotation and cells the object takes up, used for deletion
 					var storageCell : Vector2 = Global.gridSys.GlobalToGrid(gridPos)
 					
+					if previewStructures[struct]["interactionCells"]:
+						for cell in previewStructures[struct]["interactionCells"]:
+							Global.gridSys.floorGridDics[currentFloor][cell]["interactionSpot"] += 1
+					if previewStructures[struct]["interactionEdges"]:
+						for edge in previewStructures[struct]["interactionEdges"]:
+							Global.gridSys.floorEdgeDics[currentFloor][edge]["interactionEdge"] += 1
 					for cell in previewStructures[struct]["cells"]:
 						Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] = newStruct
 						if cell != storageCell:
@@ -612,11 +643,15 @@ func CellPreview(point : Vector2):
 							Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"] = newStruct
 							if edge != storageEdge:
 								Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
+						for edge in previewStructures[struct]["interactionEdges"]:
+							if edge != storageEdge:
+								Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["interactionEdges"].append(edge)
 							
 		previewStructures.clear()
 				
 func CreatePreviewStruct(newPos : Vector3, intersections : Array):
-	var tempObj = currentCellPreviewPref.instantiate()
+	#var tempObj = currentCellPreviewPref.instantiate()
+	var tempObj = currentCellPref.instantiate()
 	tempObj.position = newPos
 	tempObj.rotation_degrees.y = objectRotation
 	if tempObj.position in previewStructures:
@@ -626,7 +661,10 @@ func CreatePreviewStruct(newPos : Vector3, intersections : Array):
 			"rotation" : tempObj.rotation_degrees,
 			"previewObj" : tempObj,
 			"cells" : intersections[0],
-			"edges" : intersections[1]
+			"edges" : intersections[1],
+			"interactionCanPlace" : true,
+			"interactionCells" : null,
+			"interactionEdges" : null
 		}
 		
 	tempObj.scale.x = 0.998
@@ -639,6 +677,14 @@ func CreatePreviewStruct(newPos : Vector3, intersections : Array):
 	objMat.albedo_color = Color(1, 1, 1, 0.4)
 	
 	add_child(tempObj)
+	
+	var interactionsCheck : Array = HighlightInteractionSpots(
+		previewStructures[tempObj.position]["cells"],
+		tempObj
+	)
+	previewStructures[tempObj.position]["interactionCells"] = interactionsCheck[0]
+	previewStructures[tempObj.position]["interactionEdges"] = interactionsCheck[1]
+	previewStructures[tempObj.position]["interactionCanPlace"] = interactionsCheck[2]
 	
 func EdgePreview(point : Vector2):
 	if Input.is_action_just_pressed("Rotate"):
@@ -942,7 +988,7 @@ func HighlightCells(size : Vector3, position : Vector2):
 	var xCells : Array
 	var yCells : Array
 	var intersectingCells : Array
-	
+			
 	# The X size is odd
 	if ceili(sizeX) % 2 != 0:
 		xCells.append(Vector2(position.x, 0))
@@ -1016,12 +1062,14 @@ func HighlightCells(size : Vector3, position : Vector2):
 				canPlace = false
 				continue
 			else:
-				if Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] == null:
+				if (Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] == null
+				and Global.gridSys.floorGridDics[currentFloor][cell]["interactionSpot"] <= 0):
 					Global.gridSys.GetMaterial(floorData).albedo_color = greenCellCol
 				else:
 					Global.gridSys.GetMaterial(floorData).albedo_color = redCellCol
 					canPlace = false
-				highlightedCells.append(floorData)
+				if floorData not in highlightedCells:
+					highlightedCells.append(floorData)
 		else:
 			canPlace = false
 			
@@ -1044,6 +1092,75 @@ func HighlightCells(size : Vector3, position : Vector2):
 		else:
 			canPlace = false
 	
+
+	return [intersectingCells, intersectingEdges, canPlace]
+
+func HighlightInteractionSpots(objectCells : Array, object : Node3D):
+	var intersectingCells : Array
+	 
+	var intersectingEdges : Array
+	var intersectingEdgeDic : Dictionary
+	
+	var cellsToEdgeCheck : Array = objectCells.duplicate()
+		
+	if object.is_in_group("HasInteractionSpots"):
+		var interactionSpots : Array
+		if object.is_in_group("Shelf"):
+			interactionSpots = object.get_node("InteractionSpots").get_children()
+		elif object.is_in_group("Checkout"):
+			interactionSpots = object.get_node("VanityInteractionSpots").get_children()
+		
+		for spot in interactionSpots:
+			cellsToEdgeCheck.append(round(Vector2(spot.global_position.x, spot.global_position.z)))
+		for spot in interactionSpots:
+			var childCellPos : Vector2 = round(Vector2(spot.global_position.x, spot.global_position.z))
+			if childCellPos not in intersectingCells:
+				intersectingCells.append(childCellPos)
+			for cell in cellsToEdgeCheck:
+				if (childCellPos + cell) / 2 in Global.gridSys.edgeDic:
+					if (childCellPos + cell) / 2 not in intersectingEdges:
+						intersectingEdges.append((childCellPos + cell) / 2)
+						intersectingEdgeDic[(childCellPos + cell) / 2] = {
+							"EdgeCells" : [childCellPos, cell]
+						}
+						
+	var canPlace : bool = true
+	
+	for cell in intersectingCells:
+		if Global.gridSys.floorGridDics[currentFloor].has(cell):
+			var floorData = Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
+			if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"] == null:
+				canPlace = false
+				continue
+			else:
+				if Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] == null:
+					Global.gridSys.GetMaterial(floorData).albedo_color = greenCellCol
+				else:
+					Global.gridSys.GetMaterial(floorData).albedo_color = redCellCol
+					canPlace = false
+				if floorData not in highlightedCells:
+					highlightedCells.append(floorData)
+		else:
+			canPlace = false
+			
+	for edge in intersectingEdges:
+		if Global.gridSys.floorEdgeDics[currentFloor].has(edge):
+			var gridData = Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]
+			var edgeCells : Array = intersectingEdgeDic[edge]["EdgeCells"]
+			if gridData != null:
+				for edgeCell in edgeCells:
+					if Global.gridSys.floorGridDics[currentFloor].has(edgeCell):
+						var floorData = Global.gridSys.floorGridDics[currentFloor][edgeCell]["floorData"]
+						if floorData:
+							Global.gridSys.GetMaterial(floorData).albedo_color = redCellCol
+				canPlace = false
+			for cell in edgeCells:
+				if Global.gridSys.floorGridDics[currentFloor].has(cell):
+					var floorData = Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
+					if !highlightedCells.has(floorData) and floorData != null:
+						highlightedCells.append(floorData)
+		else:
+			canPlace = false
 
 	return [intersectingCells, intersectingEdges, canPlace]
 	
@@ -1081,7 +1198,8 @@ func IntersectEdges(size : Vector3, position : Vector2, rotated : bool):
 				
 	for edge in edges:
 		if Global.gridSys.floorEdgeDics[currentFloor].has(edge):
-			if Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"] != null:
+			if (Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"] != null
+			or Global.gridSys.floorEdgeDics[currentFloor][edge]["interactionEdge"] > 0):
 				canPlace = false
 		else:
 			canPlace = false
@@ -1215,16 +1333,25 @@ func DeleteObjects():
 			ResetDicEntry(edgePoint)
 			floorEdges[currentFloor].erase(objMesh.get_parent())
 		else:
+			if objMesh.get_parent().is_in_group("HasInteractionSpots"):
+				if objMesh.get_parent().is_in_group("Shelf"):
+					for spot in objMesh.get_parent().get_node("InteractionSpots").get_children():
+						ResetDicEntry(round(Vector2(spot.global_position.x, spot.global_position.z)))
+				elif objMesh.get_parent().is_in_group("Checkout"):
+					for spot in objMesh.get_parent().get_node("VanityInteractionSpots").get_children():
+						ResetDicEntry(round(Vector2(spot.global_position.x, spot.global_position.z)))
+			
 			var gridPoint : Vector2 = Global.gridSys.GlobalToGrid(Vector2(
 				objMesh.get_parent().position.x,
 				objMesh.get_parent().position.z
 			 ))
 			for cellToDel in Global.gridSys.floorGridDics[currentFloor][gridPoint]["cells"]:
 				ResetDicEntry(cellToDel)
-			
 			if Global.gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"] != null:
 				var edgePoint : Vector2 = Global.gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"]
 				for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
+					ResetDicEntry(edgeToDel)
+				for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["interactionEdges"]:
 					ResetDicEntry(edgeToDel)
 					
 				ResetDicEntry(edgePoint)
@@ -1245,12 +1372,18 @@ func ResetDicEntry(dicKey : Vector2):
 		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["edgeData"] = null
 		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["scale"] = Vector3(1, 1, 1)
 		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["edges"].clear()
+		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["interactionEdges"].clear()
+		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["interactionEdge"] -= 1
+		if Global.gridSys.floorEdgeDics[currentFloor][dicKey]["interactionEdge"] < 0:
+			Global.gridSys.floorEdgeDics[currentFloor][dicKey]["interactionEdge"] = 0
 	else:
 		Global.gridSys.floorGridDics[currentFloor][dicKey]["cellData"] = null
 		Global.gridSys.floorGridDics[currentFloor][dicKey]["cells"].clear()
 		Global.gridSys.floorGridDics[currentFloor][dicKey]["storageEdge"] = null
-		
-		
+		Global.gridSys.floorGridDics[currentFloor][dicKey]["interactionSpot"] -= 1
+		if Global.gridSys.floorGridDics[currentFloor][dicKey]["interactionSpot"] < 0:
+			Global.gridSys.floorGridDics[currentFloor][dicKey]["interactionSpot"] = 0
+			
 # A function to prevent Z fighting
 func ZFightFix(victim : Vector2, dic : Dictionary):
 	var newScale : Vector3 = Vector3(1, 1, 1)

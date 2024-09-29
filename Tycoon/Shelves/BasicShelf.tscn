@@ -61,7 +61,7 @@ size = Vector3(0.239856, 0.318106, 1.78594)
 [sub_resource type="BoxShape3D" id="BoxShape3D_palvs"]
 size = Vector3(0.240478, 0.282324, 1.78594)
 
-[node name="BasicShelf" type="Node3D" groups=["Shelf"]]
+[node name="BasicShelf" type="Node3D" groups=["HasInteractionSpots", "Shelf"]]
 script = ExtResource("1_bktsf")
 
 [node name="BasicShelf " type="MeshInstance3D" parent="."]

@@ -22,6 +22,10 @@ Global="*res://Main/Scripts/Global.gd"
 
 shapes/collision/shape_color=Color(5.77569e-07, 0.559711, 0.874107, 1)
 
+[global_group]
+
+HasInteractionSpots=""
+
 [input]
 
 Forward={
