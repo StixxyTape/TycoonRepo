@@ -1,7 +1,8 @@
 extends Node3D
 
-@export var scanTime : float = 50
+@export var scanTime : float = 1
 @export var queueGap : float = .7
+@export var queueDistFromWall : float = .2
 
 @onready var startPoint : Vector3 = $ConveyorPoints/StartPoint.position
 @onready var endPoint : Vector3 = $ConveyorPoints/EndPoint.position
@@ -53,8 +54,51 @@ func UpdateQueue():
 			Vector2($QueueDirectionSpot.global_position.x, $QueueDirectionSpot.global_position.z)
 			- Vector2($FrontQueueSpot.global_position.x, $FrontQueueSpot.global_position.z)).normalized()
 		
+		var checkQueueDirection : Vector2 = baseQueueDirection
+		
+		# We prevent customers from being on the edge of tiles
+		if queueSpotList.size() >= 2:
+			checkQueueDirection = (
+			queueSpotList[queueSpotList.size() - 1] - queueSpotList[queueSpotList.size() - 2]
+			).normalized()
+		
+		var checkGapBuffer : Vector2 
+		checkGapBuffer.x = queueGap * checkQueueDirection.x
+		checkGapBuffer.y = queueGap * checkQueueDirection.y
+		
+		var newCheckSpot : Vector2 = Vector2(
+			queueSpotList[queueSpotList.size() - 1].x, 
+			queueSpotList[queueSpotList.size() - 1].y) + checkGapBuffer
+		
+		var newCheckBufferSpot : Vector2 = newCheckSpot + (checkQueueDirection * queueDistFromWall)
+		
+		var checkNeighbourOffsets = [checkQueueDirection,
+						Vector2(checkQueueDirection.y, -checkQueueDirection.x),
+						Vector2(-checkQueueDirection.y, checkQueueDirection.x),
+						-checkQueueDirection
+						]
+						
+		var unavailableCheckSpot : bool = false	
+		var spotToSkip : Vector2
+		
+		if round(newCheckBufferSpot) not in Global.gridSys.gridDic:
+			unavailableCheckSpot = true
+		elif (round(newCheckBufferSpot) in Global.gridSys.gridDic
+		and (Global.gridSys.gridDic[round(newCheckBufferSpot)]["floorData"] == null
+		or Global.gridSys.gridDic[round(newCheckBufferSpot)]["cellData"] != null)):
+			unavailableCheckSpot = true
+		
+		if (round(newCheckBufferSpot) + round(newCheckSpot)) / 2 in Global.gridSys.edgeDic:
+			var edgeToCheck : Vector2 = (round(newCheckBufferSpot) + round(newCheckSpot)) / 2
+			if (Global.gridSys.edgeDic[edgeToCheck]["edgeData"] != null):
+				unavailableCheckSpot = true
+		
+		if unavailableCheckSpot:
+				spotToSkip = newCheckSpot
+				
+		# Here we add the actual spot, accounting for the edge fix 
 		var queueDirection : Vector2 = baseQueueDirection
-	
+		
 		if queueSpotList.size() >= 2:
 			queueDirection = (
 			queueSpotList[queueSpotList.size() - 1] - queueSpotList[queueSpotList.size() - 2]
@@ -63,51 +107,58 @@ func UpdateQueue():
 		var gapBuffer : Vector2 
 		gapBuffer.x = queueGap * queueDirection.x
 		gapBuffer.y = queueGap * queueDirection.y
-	
-		#print("\n", queueDirection.x)
-		#print(ceil(queueDirection.x))
-		#print(queueDirection.normalized())
 		
 		var newSpot : Vector2 = Vector2(
 			queueSpotList[queueSpotList.size() - 1].x, 
 			queueSpotList[queueSpotList.size() - 1].y) + gapBuffer
-		
+
 		var neighbourOffsets = [queueDirection,
 						Vector2(queueDirection.y, -queueDirection.x),
 						Vector2(-queueDirection.y, queueDirection.x),
 						-queueDirection
 						]
+						
+		gapBuffer.x = queueGap * queueDirection.x
+		gapBuffer.y = queueGap * queueDirection.y
+	
+		#print("\n", queueSpotList[queueSpotList.size() - 2])
+		#print(queueSpotList[queueSpotList.size() - 1])
+		#print(queueDirection)
 			
 		var unavailableSpot : bool = false
 		
-		if round(newSpot) not in queueCellsList:
-			if round(newSpot) not in Global.gridSys.gridDic:
-				unavailableSpot = true
-			elif (round(newSpot) in Global.gridSys.gridDic
-			and (Global.gridSys.gridDic[round(newSpot)]["floorData"] == null
-			or Global.gridSys.gridDic[round(newSpot)]["cellData"] != null)):
-				unavailableSpot = true
-			
-			var edgeToCheck : Vector2 = (round(newSpot) + queueCellsList[queueCellsList.size() - 1]) / 2
-			
-			if edgeToCheck not in Global.gridSys.edgeDic:
-				unavailableSpot = true
-			elif (edgeToCheck in Global.gridSys.edgeDic #
-			and Global.gridSys.edgeDic[edgeToCheck]["edgeData"] != null):
-				unavailableSpot = true
-			if !unavailableSpot:
+		if newSpot != spotToSkip:
+			if round(newSpot) not in queueCellsList:
+				if round(newSpot) not in Global.gridSys.gridDic:
+					unavailableSpot = true
+				elif (round(newSpot) in Global.gridSys.gridDic
+				and (Global.gridSys.gridDic[round(newSpot)]["floorData"] == null
+				or Global.gridSys.gridDic[round(newSpot)]["cellData"] != null)):
+					unavailableSpot = true
+				
+				var edgeToCheck : Vector2 = (round(newSpot) + round(queueSpotList[queueSpotList.size() - 1])) / 2
+				
+				if edgeToCheck not in Global.gridSys.edgeDic:
+					unavailableSpot = true
+				elif (edgeToCheck in Global.gridSys.edgeDic 
+				and Global.gridSys.edgeDic[edgeToCheck]["edgeData"] != null):
+					unavailableSpot = true
+					
+				if !unavailableSpot:
+					queueSpotList.append(newSpot)
+					queueCellsList.append(round(newSpot))
+			else:
 				queueSpotList.append(newSpot)
-				queueCellsList.append(round(newSpot))
-		else:
-			queueSpotList.append(newSpot)
 		
-		if unavailableSpot:
+		if unavailableSpot or newSpot == spotToSkip:
 			newSpot -= gapBuffer
 			var spotFound : bool = false
 			for offset in neighbourOffsets:
 				var spotToCheck : Vector2 = newSpot + (offset * queueGap)
 				var newAvailableSpot : bool = true
 				if offset == queueDirection or offset == -queueDirection:
+					continue
+				if spotToCheck == spotToSkip:
 					continue
 				if round(spotToCheck) in queueCellsList:
 					queueSpotList.append(spotToCheck)
@@ -140,8 +191,8 @@ func UpdateQueue():
 			if !spotFound:
 				queueCellsList.append(round(newSpot + gapBuffer))
 				queueSpotList.append(newSpot + gapBuffer)
-		
-	
+			
+
 	queueUpdated.emit()
 	
 func MoveQueue():

@@ -48,6 +48,13 @@ func OpenStockMenu(shelf : Node3D):
 	if get_tree().get_nodes_in_group("ReturnButton"):
 		get_tree().get_nodes_in_group("ReturnButton")[0].queue_free()
 		
+	var fullStockButton = Button.new()
+	fullStockButton.text = "Fully stock"
+	$StockMenu.add_child(fullStockButton)
+	
+	fullStockButton.pressed.connect(Global.stockSys.FullyStockShelf.bind(
+		shelf
+	))
 	#$StockMenu.position = get_viewport().get_mouse_position()
 	for stockType in Global.stockSys.stockInventory:
 		if stockType == 000:
@@ -61,6 +68,7 @@ func OpenStockMenu(shelf : Node3D):
 			shelf
 		))
 		ConnectMouseHover(stockButton)
+	ConnectMouseHover(fullStockButton)
 	CreateReturnButton()
 		
 func CloseStockMenu():

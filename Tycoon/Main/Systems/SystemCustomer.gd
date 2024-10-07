@@ -11,5 +11,6 @@ func _ready() -> void:
 	
 func SpawnCustomer():
 	var newCustomer = customerPref.instantiate()
-	newCustomer.position = Vector3(2, 0, 2)
+	newCustomer.position = Vector3(2, 0, 7)
+	Global.gridSys.DuplicateMaterial(newCustomer)
 	add_child(newCustomer)

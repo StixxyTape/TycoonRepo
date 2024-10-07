@@ -1,7 +1,8 @@
-[gd_scene load_steps=14 format=4 uid="uid://dfg2i8yf0sb01"]
+[gd_scene load_steps=15 format=4 uid="uid://dfg2i8yf0sb01"]
 
 [ext_resource type="Script" path="res://Shelves/Shelf.gd" id="1_an73w"]
 [ext_resource type="Script" path="res://Shelves/ShelfOverview.gd" id="1_bktsf"]
+[ext_resource type="Script" path="res://Shelves/ShelfColliderManager.gd" id="2_m4lyd"]
 [ext_resource type="Script" path="res://Shelves/ShelfInteractionSpots.gd" id="5_2a0hp"]
 [ext_resource type="Script" path="res://Shelves/ShelfState.gd" id="6_40kqj"]
 
@@ -76,6 +77,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_62y82")
 shape = SubResource("ConcavePolygonShape3D_tagkp")
 
 [node name="ShelfLevels" type="Node3D" parent="."]
+script = ExtResource("2_m4lyd")
 
 [node name="ShelfLevel" type="Node3D" parent="ShelfLevels" groups=["ShelfLevel"]]
 script = ExtResource("1_an73w")
@@ -99,7 +101,7 @@ script = ExtResource("1_an73w")
 collision_layer = 8
 collision_mask = 8
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel2/StaticBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel2/StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.096, 0.565442, 0)
 shape = SubResource("BoxShape3D_8cuqv")
 
@@ -114,7 +116,7 @@ script = ExtResource("1_an73w")
 collision_layer = 8
 collision_mask = 8
 
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel3/StaticBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel3/StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.928385, 0)
 shape = SubResource("BoxShape3D_pr757")
 
@@ -129,7 +131,7 @@ script = ExtResource("1_an73w")
 collision_layer = 8
 collision_mask = 8
 
-[node name="CollisionShape3D4" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel4/StaticBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShelfLevels/ShelfLevel4/StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0544943, 1.27284, 0)
 shape = SubResource("BoxShape3D_palvs")
 

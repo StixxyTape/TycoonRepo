@@ -40,23 +40,23 @@ func EstablishStockInventory():
 	}
 	stockInventory[001] = {
 		"name" : "Canned Goods",
-		"amount" : 999,
+		"amount" : 9999,
 		"category" : "Food",
 		"prefab" : preload("res://Models/Stock/CannedGood.gltf")
 	}
 	stockInventory[002] = {
 		"name" : "Fresh Produce",
-		"amount" : 999,
+		"amount" : 0,
 		"category" : "Drink"
 	}
 	stockInventory[003] = {
 		"name" : "Snacks",
-		"amount" : 999,
+		"amount" : 0,
 		"category" : "Food"
 	}
 	stockInventory[004] = {
 		"name" : "Drinks",
-		"amount" : 999,
+		"amount" : 9999,
 		"category" : "Drink",
 		"prefab" : preload("res://Models/Stock/Drink.gltf")
 	}
@@ -88,6 +88,7 @@ func MouseRaycast():
 				return
 			if (!Global.stocking and 
 				colliderObj.get_parent().get_parent().is_in_group("Shelf")):
+				colliderObj.get_parent().get_parent().get_node("ShelfLevels").ActivateShelfLevels()
 				Global.camCanMove = false
 				Global.stocking = true
 				currentShelf = colliderObj.get_parent().get_parent()
@@ -100,14 +101,16 @@ func MouseRaycast():
 						Global.uiSys.ShelfUpdate(currentShelfLevel)
 						Global.uiSys.CloseStockMenu()
 						Global.uiSys.OpenStockMenu(currentShelfLevel)
-					else:
-						currentShelf = colliderObj.get_parent().get_parent().get_parent()
-						cam.TweenCamera(currentShelf, 1.5, .8)
-						Global.uiSys.CloseStockMenu()
-						Global.uiSys.CreateReturnButton()
+					#else:
+						#currentShelf = colliderObj.get_parent().get_parent().get_parent()
+						#cam.TweenCamera(currentShelf, 1.5, .8)
+						#Global.uiSys.CloseStockMenu()
+						#Global.uiSys.CreateReturnButton()
 						
 				elif colliderObj.get_parent().get_parent().is_in_group("Shelf"):
 					if colliderObj.get_parent().get_parent() != currentShelf:
+						currentShelf.get_node("ShelfLevels").DeactivateShelfLevels()
+						colliderObj.get_parent().get_parent().get_node("ShelfLevels").ActivateShelfLevels()
 						currentShelf = colliderObj.get_parent().get_parent()
 						cam.TweenCamera(currentShelf, 1.5, .8)
 						Global.uiSys.CloseStockMenu()
@@ -122,7 +125,7 @@ func ResetEverything():
 	
 func ResetRayCol():
 	rayCol = null
-	
+
 func StockShelf(item : int, shelf : Node3D):
 	var itemsToStock = shelf.GetShelfState().maxStock - shelf.GetShelfState().currentStock
 	var itemsAvailableToStock = stockInventory[item]["amount"]
@@ -163,9 +166,19 @@ func StockCalc(item, shelf, itemsToStock, itemsAvailableToStock):
 
 func ExitStock():
 	Global.uiSys.CloseStockMenu()
+	currentShelf.get_node("ShelfLevels").DeactivateShelfLevels()
 	currentShelf = null
 	currentShelfLevel = null
 	cam.ExitTween()
 	Global.stocking = false
 	Global.camCanMove = true
+
+func FullyStockShelf(shelf : Node3D):
+	var itemToStock : int = 001
+	for child in shelf.get_parent().get_children():
+		StockShelf(itemToStock, child)
+		if itemToStock == 001:
+			itemToStock = 004
+		else:
+			itemToStock = 001
 	

@@ -1,12 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://cyloqgfqbvuw2"]
+[gd_scene load_steps=5 format=3 uid="uid://cyloqgfqbvuw2"]
 
 [ext_resource type="Script" path="res://Customers/Customer.gd" id="1_6jasd"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_ej1jn"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b1s6s"]
+
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_phmvk"]
 
-[node name="Customer" type="Node3D"]
+[node name="Customer" type="Node3D" groups=["Customer"]]
 script = ExtResource("1_6jasd")
 movementSpeed = 5.0
 pathfindRange = 0.05
@@ -15,6 +17,7 @@ pathfindEffort = 1000
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = SubResource("CapsuleMesh_ej1jn")
+surface_material_override/0 = SubResource("StandardMaterial3D_b1s6s")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 

@@ -1,11 +1,10 @@
-res://Facilities/Checkouts/BasicCheckout.tscn
+res://Main/Scenes/World.tscn
 res://Shelves/Shelf.gd
 res://Shelves/ShelfState.gd
 res://Models/Building/Structure/FloorTile/FloorMat.tres
 res://Models/Building/Structure/WallTile/WallMat.tres
 res://Models/Building/Structure/DoubleDoor/DoubleDoorMat.tres
-res://Shelves/BasicShelf.tscn
 res://Main/Systems/SystemBuild.gd
 res://Customers/Customer.tscn
-res://Main/Scenes/World.tscn
-res://Main/Systems/SystemGrid.gd
+res://Facilities/Checkouts/BasicCheckout.tscn
+res://Shelves/BasicShelf.tscn

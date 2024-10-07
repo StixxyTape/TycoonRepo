@@ -57,6 +57,8 @@ var megaWallPref : PackedScene = preload("res://Models/Building/Structure/MegaWa
 
 var floorPref : PackedScene = preload("res://Models/Building/Structure/FloorTile/FloorTile.gltf")
 
+var stairPref : PackedScene = preload("res://Models/Building/Structure/Stairs/Stairs.gltf")
+
 #endregion
 
 #region Shelves
@@ -106,10 +108,16 @@ var floorFloors : Array
 
 #endregion
 
+#region Undo
+# An array of arrays of dictionaries
+var undoList : Array 
+
+#endregion
+
 func _ready() -> void:
 	Global.switchSignal.connect(ResetEverything)
 	
-	currentCellPref = basicShelfPref
+	currentCellPref = stairPref
 	#currentCellPreviewPref = basicShelfPref
 	currentEdgePref = wallPref
 	currentFloorPref = floorPref
@@ -132,6 +140,12 @@ func _process(delta):
 		InputManager()
 	
 func InputManager():
+	if Input.is_action_just_pressed("Undo") and undoList.size() > 0:
+		if undoList[undoList.size() - 1][0] == currentFloor:
+			undoList[undoList.size() - 1].remove_at(0)
+			#for x in undoList[undoList.size() - 1]:
+				#print("\n", x)
+			Undo()
 	if Input.is_action_just_pressed("Rotate"):
 		objectRotation += 90
 		objectRotation = wrapf(objectRotation, 0, 360)
@@ -408,7 +422,7 @@ func ResetDeletionCells():
 	ogMultiSelectEdge = Vector2(-99, -99)
 		
 func ResetDeletionObj():
-	if objToDelPreview:
+	if objToDelPreview and is_instance_valid(objToDelPreview):
 		Global.gridSys.GetMaterial(objToDelPreview).albedo_color = resetCol
 		objToDelPreview = null
 
@@ -583,6 +597,8 @@ func CellPreview(point : Vector2):
 	if Input.is_action_just_released("Place"):
 		gridPreviewAxis.clear()
 		if previewStructures.size() > 0:
+			var undoArray : Array = [currentFloor]
+			var addToUndoList : bool = false
 			for struct in previewStructures:
 				if is_instance_valid(previewStructures[struct]["previewObj"]):
 					previewStructures[struct]["previewObj"].queue_free()
@@ -601,9 +617,29 @@ func CellPreview(point : Vector2):
 							break
 					if blockingInteractionSpot:
 						continue
-							
+					
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newStruct = currentCellPref.instantiate()
+					
+					var undoDicEntry : Dictionary = {
+						"Object" : newStruct,
+						"Cells" : {},
+						"Edges" : {},
+						"Building" : false
+					}
+					if previewStructures[struct]["interactionCells"]:
+						for cell in previewStructures[struct]["interactionCells"]:
+							undoDicEntry["Cells"][cell] = Global.gridSys.floorGridDics[currentFloor][cell]
+					for cell in previewStructures[struct]["cells"]:
+						undoDicEntry["Cells"][cell] = Global.gridSys.floorGridDics[currentFloor][cell]
+					if previewStructures[struct]["interactionEdges"]:
+						for edge in previewStructures[struct]["interactionEdges"]:
+							undoDicEntry["Edges"][edge] = Global.gridSys.floorEdgeDics[currentFloor][edge]
+					for edge in previewStructures[struct]["edges"]:
+						undoDicEntry["Edges"][edge] = Global.gridSys.floorEdgeDics[currentFloor][edge]
+						
+					undoDicEntry = undoDicEntry.duplicate(true)
+					undoArray.append(undoDicEntry)
 					
 					# To group certain structures
 					if newStruct.is_in_group("Shelf"):
@@ -646,7 +682,8 @@ func CellPreview(point : Vector2):
 						for edge in previewStructures[struct]["interactionEdges"]:
 							if edge != storageEdge:
 								Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["interactionEdges"].append(edge)
-							
+			if undoArray.size() > 1:
+				undoList.append(undoArray)
 		previewStructures.clear()
 				
 func CreatePreviewStruct(newPos : Vector3, intersections : Array):
@@ -792,19 +829,33 @@ func EdgePreview(point : Vector2):
 	if Input.is_action_just_released("Place"):
 		edgePreviewAxis.clear()
 		if previewStructures.size() > 0:
+			var undoArray : Array = [currentFloor]
+			var wallReplaceDic : Dictionary = {}
 			for struct in previewStructures:
 				if is_instance_valid(previewStructures[struct]["previewObj"]):
 					previewStructures[struct]["previewObj"].queue_free()
 				
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
-					
 					var newWall = currentEdgePref.instantiate()
+					
+					var undoDicEntry : Dictionary = {
+						"Object" : newWall,
+						"Edges" : {},
+						"Building" : false
+					}
+					
+					for edge in previewStructures[struct]["edges"]:
+						undoDicEntry["Edges"][edge] = Global.gridSys.floorEdgeDics[currentFloor][edge]
+						
+					undoDicEntry = undoDicEntry.duplicate(true)
+					undoArray.append(undoDicEntry)
+					
 					add_child(newWall)
 					floorEdges[currentFloor].append(newWall)
 					newWall.rotation_degrees = previewStructures[struct]["rotation"]
 					newWall.scale = ZFightFix(gridPos, Global.gridSys.floorEdgeDics[currentFloor])
 					newWall.position = struct
-					newWall.add_to_group("Edge")
+					newWall.add_to_group("Edge", true)
 					Global.gridSys.DuplicateMaterial(newWall)
 					
 					var storageEdge : Vector2 
@@ -812,19 +863,35 @@ func EdgePreview(point : Vector2):
 						storageEdge = Global.gridSys.GlobalToEdge(gridPos, false)
 					else:
 						storageEdge = Global.gridSys.GlobalToEdge(gridPos, true)
-						
+					
 					for edge in previewStructures[struct]["edges"]:
 						if Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]:
-							objectsToDelete.append(
-								Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"].get_child(0)
-								)
-							DeleteObjects()
-							
+							wallReplaceDic[edge] = {}
+							wallReplaceDic[edge]["wallToDel"] = Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]
+							wallReplaceDic[edge]["newWall"] = newWall
+							wallReplaceDic[edge]["newWallScale"] = newWall.scale
 						Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] = newWall
 						Global.gridSys.floorEdgeDics[currentFloor][edge]["scale"] = newWall.scale
 						
 						if edge != storageEdge:
 							Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
+			if wallReplaceDic.size() > 0:
+				for entry in wallReplaceDic:
+					objectsToDelete.append(
+						wallReplaceDic[entry]["wallToDel"].get_child(0)
+					)
+				DeleteObjects()
+				for entry in wallReplaceDic:
+					Global.gridSys.floorEdgeDics[currentFloor][entry]["edgeData"] = wallReplaceDic[entry]["newWall"]
+					Global.gridSys.floorEdgeDics[currentFloor][entry]["scale"] = wallReplaceDic[entry]["newWallScale"]
+					
+			if undoArray.size() > 1:
+				undoList.append(undoArray)
+				#for entry in undoArray:
+					#print(entry)
+		
+		#for x in undoList[undoList.size() - 1]:
+			#print("\n", x)
 		previewStructures.clear()
 		
 func CreatePreviewEdge(newPos : Vector3, intersectingEdges : Array):
@@ -936,25 +1003,44 @@ func FloorPreview(point : Vector2):
 	if Input.is_action_just_released("Place"):
 		gridPreviewAxis.clear()
 		if previewStructures.size() > 0:
+			var undoArray : Array = [currentFloor]
 			for struct in previewStructures:
 				if is_instance_valid(previewStructures[struct]["previewObj"]):
 					previewStructures[struct]["previewObj"].queue_free()
-				
-					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					
+					if Global.gridSys.floorGridDics[currentFloor][Vector2(struct.x, struct.z)]["floorData"]:
+						continue
+						
+					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newStruct = currentFloorPref.instantiate()
+					
+					var undoDicEntry : Dictionary = {
+						"Object" : newStruct,
+						"Cells" : {},
+						"Building" : false,
+						"Floor" : true
+					}
+					
+					undoDicEntry["Cells"][gridPos] = Global.gridSys.floorGridDics[currentFloor][gridPos]
+						
+					undoDicEntry = undoDicEntry.duplicate(true)
+					undoArray.append(undoDicEntry)
+					
 					add_child(newStruct)
 					floorFloors[currentFloor].append(newStruct)
 					newStruct.rotation_degrees = previewStructures[struct]["rotation"]
 					newStruct.position = struct
-					newStruct.add_to_group("Floor")
+					newStruct.add_to_group("Floor", true)
 					Global.gridSys.DuplicateMaterial(newStruct)
 					
 					if Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"]:
 						floorFloors[currentFloor].erase(Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"])
 						Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"].queue_free()
 					Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"] = newStruct
-								
+					
+			if undoArray.size() > 1:
+				undoList.append(undoArray)
+				
 		previewStructures.clear()
 		
 func CreatePreviewFloor(newPos : Vector3):
@@ -1312,33 +1398,69 @@ func MultiSelectEdge(newPos : Vector2):
 	return intersectingEdges
 	
 func DeleteObjects():
+	var undoArray : Array = [currentFloor]
 	for objMesh in objectsToDelete:
 		# Ensure edge objects don't accidentally delete cell objects
 		if objMesh.get_parent().is_in_group("Floor"):
 			var gridPoint : Vector2 = Global.gridSys.GlobalToGrid(Vector2(
 				objMesh.get_parent().position.x,
 				objMesh.get_parent().position.z
-			 ))	
+			))
+			
+			var undoDicEntry : Dictionary = {
+				"Object" : objMesh.get_parent().duplicate(),
+				"Groups" : objMesh.get_parent().get_groups(),
+				"Cells" : {},
+				"Building" : true
+			}
+			
+			undoDicEntry["Cells"][gridPoint] = Global.gridSys.floorGridDics[currentFloor][gridPoint].duplicate(true)
+			undoArray.append(undoDicEntry.duplicate(true))
+			
 			Global.gridSys.floorGridDics[currentFloor][gridPoint]["floorData"] = null
 			floorFloors[currentFloor].erase(objMesh.get_parent())
+			
 		elif objMesh.get_parent().is_in_group("Edge"):
 			var edgePoint : Vector2 
 			edgePoint = Global.gridSys.GlobalToEdge(Vector2(
 				objMesh.get_parent().position.x, 
 				objMesh.get_parent().position.z), 
 			ObjectRotationCheck(objMesh.get_parent()))
-
+			
+			var undoDicEntry : Dictionary = {
+				"Object" : objMesh.get_parent().duplicate(),
+				"Groups" : objMesh.get_parent().get_groups(),
+				"Edges" : {},
+				"Building" : true
+			}
+			
 			for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
+				undoDicEntry["Edges"][edgeToDel] = Global.gridSys.floorEdgeDics[currentFloor][edgeToDel].duplicate(true)
 				ResetDicEntry(edgeToDel)
+			undoDicEntry["Edges"][edgePoint] = Global.gridSys.floorEdgeDics[currentFloor][edgePoint].duplicate(true)
 			ResetDicEntry(edgePoint)
 			floorEdges[currentFloor].erase(objMesh.get_parent())
+			
+			undoArray.append(undoDicEntry.duplicate(true))
 		else:
+			var undoDicEntry : Dictionary = {
+				"Object" : objMesh.get_parent().duplicate(),
+				"Groups" : objMesh.get_parent().get_groups(),
+				"Cells" : {},
+				"Edges" : {},
+				"Building" : true
+			}
+			
 			if objMesh.get_parent().is_in_group("HasInteractionSpots"):
 				if objMesh.get_parent().is_in_group("Shelf"):
 					for spot in objMesh.get_parent().get_node("InteractionSpots").get_children():
+						var roundSpot = round(Vector2(spot.global_position.x, spot.global_position.z))
+						undoDicEntry["Cells"][roundSpot] = Global.gridSys.floorGridDics[currentFloor][roundSpot].duplicate(true)
 						ResetDicEntry(round(Vector2(spot.global_position.x, spot.global_position.z)))
 				elif objMesh.get_parent().is_in_group("Checkout"):
 					for spot in objMesh.get_parent().get_node("VanityInteractionSpots").get_children():
+						var roundSpot = round(Vector2(spot.global_position.x, spot.global_position.z))
+						undoDicEntry["Cells"][roundSpot] = Global.gridSys.floorGridDics[currentFloor][roundSpot].duplicate(true)
 						ResetDicEntry(round(Vector2(spot.global_position.x, spot.global_position.z)))
 			
 			var gridPoint : Vector2 = Global.gridSys.GlobalToGrid(Vector2(
@@ -1346,19 +1468,28 @@ func DeleteObjects():
 				objMesh.get_parent().position.z
 			 ))
 			for cellToDel in Global.gridSys.floorGridDics[currentFloor][gridPoint]["cells"]:
+				undoDicEntry["Cells"][cellToDel] = Global.gridSys.floorGridDics[currentFloor][cellToDel].duplicate(true)
 				ResetDicEntry(cellToDel)
 			if Global.gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"] != null:
 				var edgePoint : Vector2 = Global.gridSys.floorGridDics[currentFloor][gridPoint]["storageEdge"]
 				for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
+					undoDicEntry["Edges"][edgeToDel] = Global.gridSys.floorEdgeDics[currentFloor][edgeToDel].duplicate(true)
 					ResetDicEntry(edgeToDel)
 				for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["interactionEdges"]:
+					undoDicEntry["Edges"][edgeToDel] = Global.gridSys.floorEdgeDics[currentFloor][edgeToDel].duplicate(true)
 					ResetDicEntry(edgeToDel)
-					
+				undoDicEntry["Edges"][edgePoint] = Global.gridSys.floorEdgeDics[currentFloor][edgePoint].duplicate(true)
 				ResetDicEntry(edgePoint)
+			undoDicEntry["Cells"][gridPoint] = Global.gridSys.floorGridDics[currentFloor][gridPoint].duplicate(true)
 			ResetDicEntry(gridPoint)
 			floorObjects[currentFloor].erase(objMesh.get_parent())
+			
+			undoArray.append(undoDicEntry.duplicate(true))
+			
 		objMesh.get_parent().queue_free()
 		
+	if undoArray.size() > 1:
+		undoList.append(undoArray)
 	ResetDeletionObjects()
 	
 func ResetDicEntry(dicKey : Vector2):
@@ -1449,3 +1580,136 @@ func HideFloors():
 			for floorObj in floorFloors[floor]:
 				floorObj.visible = false
 				floorObj.get_child(0).get_child(0).get_child(0).disabled = true
+
+func Undo():
+	for dicEntry in undoList[undoList.size() - 1]:
+		var newObj : Node3D
+		
+		if dicEntry["Building"]:
+			var packedObj : PackedScene = PackedScene.new()
+			SetPackedSceneOwnership(dicEntry["Object"], dicEntry["Object"])
+			packedObj.pack(dicEntry["Object"])
+			newObj = packedObj.instantiate()
+			for group in dicEntry["Groups"]:
+				newObj.add_to_group(group, true)
+			if newObj.is_in_group("Shelf"):
+				get_node("Shelves").add_child(newObj)
+			elif newObj.is_in_group("Checkout"):
+				get_node("Checkouts").add_child(newObj)
+			else:
+				add_child(newObj)
+				
+		if "Cells" in dicEntry:
+			for cell in dicEntry["Cells"]:
+				
+				# To make sure that it doesn't set freed objects as floorData or cellData
+				var skipFloorData : bool = false
+				var skipCellData : bool = false
+					
+				if !dicEntry["Building"]:
+					if "Edges" not in dicEntry: 
+						var floorData = Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
+						if is_instance_valid(floorData):
+							floorFloors[currentFloor].erase(floorData)
+							highlightedCells.erase(floorData)
+							floorData.queue_free()
+						skipCellData = true
+					else:
+						var cellData = Global.gridSys.floorGridDics[currentFloor][cell]["cellData"]
+						if is_instance_valid(cellData):
+							floorObjects[currentFloor].erase(cellData)
+							cellData.queue_free()
+						skipFloorData = true
+						
+				elif dicEntry["Building"]:
+					if "Edges" not in dicEntry: 
+						skipCellData = true
+					else:
+						skipFloorData = true
+						
+				for entry in dicEntry["Cells"][cell]:
+					if (skipFloorData and entry == "floorData") or (skipCellData and entry == "cellData"):
+						continue
+					Global.gridSys.floorGridDics[currentFloor][cell][entry] = dicEntry["Cells"][cell][entry]
+					
+				if dicEntry["Building"]:
+					if "Edges" not in dicEntry: 
+						Global.gridSys.floorGridDics[currentFloor][cell]["floorData"] = newObj
+						floorFloors[currentFloor].append(newObj)
+					else:
+						Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] = newObj
+						floorObjects[currentFloor].append(newObj)
+							
+					
+		if "Edges" in dicEntry:
+			for edge in dicEntry["Edges"]:
+				if !dicEntry["Building"]:
+					if "Cells" not in dicEntry:
+						var edgeData = Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]
+						if is_instance_valid(edgeData):
+							floorEdges[currentFloor].erase(edgeData)
+							edgeData.queue_free()
+						# For replaced walls
+						if !is_instance_valid(dicEntry["Edges"][edge]["edgeData"]):
+							dicEntry["Edges"][edge]["edgeData"] = null
+							dicEntry["Edges"][edge]["scale"] = Vector3(1, 1, 1)
+							
+					elif "Cells" in dicEntry:
+						var cellData = Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"]
+						if is_instance_valid(cellData):
+							floorEdges[currentFloor].erase(cellData)
+							cellData.queue_free()
+							
+				Global.gridSys.floorEdgeDics[currentFloor][edge] = dicEntry["Edges"][edge]
+				
+				if dicEntry["Building"]:
+					if "Cells" not in dicEntry:
+						Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"] = newObj
+					else:
+						Global.gridSys.floorEdgeDics[currentFloor][edge]["cellData"] = newObj
+					floorEdges[currentFloor].append(newObj)
+					
+		
+	print(floorEdges)
+	undoList.remove_at(undoList.size() - 1)
+			
+#func StoreFloorState():
+	#var undoDicEntry : Dictionary = {}
+	#undoDicEntry["currentFloor"] = currentFloor
+	#undoDicEntry["gridDicState"] = Global.gridSys.floorGridDics[currentFloor]
+	#undoDicEntry["edgeDicState"] = Global.gridSys.floorEdgeDics[currentFloor]
+	#undoDicEntry["objects"] = floorObjects[currentFloor]
+	#undoDicEntry["edges"] = floorEdges[currentFloor]
+	#undoDicEntry["floors"] = floorFloors[currentFloor]
+	#undoDicEntry = undoDicEntry.duplicate(true)
+	#undoList.append(undoDicEntry)
+
+#func Undo():
+	#for obj in undoList[undoIndex]["objects"]:
+		#var newObj : PackedScene = PackedScene.new()
+		#SetPackedSceneOwnership(obj, obj)
+		#newObj.pack(obj)
+		#var addedObj = newObj.instantiate()
+		#if addedObj.is_in_group("Shelf"):
+			#get_node("Shelves").add_child(addedObj)
+		#elif addedObj.is_in_group("Checkout"):
+			#get_node("Checkouts").add_child(addedObj)
+		#else:
+			#add_child(addedObj)
+	#for obj in undoList[undoIndex]["edges"]:
+		#var newObj : PackedScene = PackedScene.new()
+		#SetPackedSceneOwnership(obj, obj)
+		#newObj.pack(obj)
+		#add_child(newObj.instantiate())
+	#for obj in undoList[undoIndex]["floors"]:
+		#var newObj : PackedScene = PackedScene.new()
+		#SetPackedSceneOwnership(obj, obj)
+		#newObj.pack(obj)
+		#add_child(newObj.instantiate())
+		#
+		
+func SetPackedSceneOwnership(parent : Node3D, recursiveChild):
+	for child in recursiveChild.get_children():
+		child.set_owner(parent)
+		SetPackedSceneOwnership(parent, child)
+	
