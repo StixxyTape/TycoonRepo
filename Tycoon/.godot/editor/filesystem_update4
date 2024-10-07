@@ -8,3 +8,4 @@ res://Main/Systems/SystemBuild.gd
 res://Customers/Customer.tscn
 res://Facilities/Checkouts/BasicCheckout.tscn
 res://Shelves/BasicShelf.tscn
+res://Main/Systems/SystemGrid.gd

@@ -19,7 +19,7 @@ var edges : PackedVector2Array = ([
 		])
 
 var wallHeight : int = 2
-var maxFloor : int = 3
+var maxFloor : int = 0
 
 var floorGridDics : Array = []
 var floorEdgeDics : Array = []
