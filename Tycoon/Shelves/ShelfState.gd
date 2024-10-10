@@ -4,7 +4,6 @@ extends Node3D
 ## stock positions are automatically assigned
 ## by calculating the width of the shelf
 @export var autoStock : bool = false
-#@export var stockPref : PackedScene 
 
 @export var maxStock : int = 10
 @export var currentStock : int = 0

@@ -36,7 +36,7 @@ signal switchSignal
 signal spawnCustomerSignal
 
 #endregion
-
+	
 func _process(delta: float) -> void:
 	GlobalInputManager()
 	
@@ -53,3 +53,6 @@ func SetHoverMode(mode):
 	
 func UpdateUI():
 	uiSys.StockUpdate()
+
+
+	

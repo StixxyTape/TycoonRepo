@@ -8,7 +8,7 @@ func GetShelfState():
 
 func AutoStockCheck():
 	GetShelfState().ClearStock()
-	if GetShelfState().autoStock:
+	if GetShelfState().autoStock and stockType != 000:
 		GetShelfState().stockPref = Global.stockSys.stockInventory[stockType]["prefab"]
 		GetShelfState().AutoStock()
 

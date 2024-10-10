@@ -17,10 +17,15 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 [autoload]
 
 Global="*res://Main/Scripts/Global.gd"
+SaveLoad="*res://Main/Scripts/SaveLoad.gd"
 
 [debug]
 
 shapes/collision/shape_color=Color(5.77569e-07, 0.559711, 0.874107, 1)
+
+[display]
+
+window/stretch/mode="canvas_items"
 
 [global_group]
 

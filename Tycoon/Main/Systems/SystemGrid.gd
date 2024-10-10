@@ -53,7 +53,10 @@ func EstablishGrid():
 			newFloor.get_child(0).get_child(0).set_collision_layer_value(2, true)
 			DuplicateMaterial(newFloor)
 			newFloor.position = Vector3(x, 0, y)
-			newFloor.add_to_group("Floor")
+			newFloor.add_to_group("Floor", true)
+			newFloor.add_to_group("Persist", true)
+			newFloor.set_meta("currentFloor", 0)
+			newFloor.set_meta("cells", Vector2(x, y))
 			gridDic[Vector2(x, y)]["floorData"] = newFloor
 			newFloor.scale = Vector3(1, 1, 1)
 			get_node("../BuildSystem").add_child(newFloor)

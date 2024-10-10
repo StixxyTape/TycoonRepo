@@ -108,7 +108,12 @@ var floorFloors : Array
 
 #endregion
 
+# For Shopping
+var structureDic : Dictionary 
+
 func _ready() -> void:
+	EstablishStructureDic()
+	
 	Global.switchSignal.connect(ResetEverything)
 	
 	currentCellPref = basicShelfPref
@@ -126,26 +131,37 @@ func _ready() -> void:
 		
 	for floor in Global.gridSys.floorGridDics[0]:
 		floorFloors[0].append(Global.gridSys.floorGridDics[0][floor]["floorData"])
-	
+
 func _process(delta):
 	currentHeight = currentFloor * Global.gridSys.wallHeight
 	if Global.buildMode:
 		MouseRaycast()
 		InputManager()
 	
+func EstablishStructureDic():
+	structureDic[basicShelfPref] = {
+		"name" : "Double Shelf",
+		"cost" : 100
+	}
+	structureDic[basicCheckoutPref] = {
+		"name" : "Checkout",
+		"cost" : 200
+	}
+
+func SwapBuildPref(prefab : PackedScene, type : int):
+	#type 1 is obj, 2 is edge, 3 is floor
+	if type == 1:
+		currentCellPref = prefab
+	elif type == 2:
+		currentEdgePref = prefab
+	elif type == 3:
+		currentFloorPref = prefab
+		
 func InputManager():
 	if Input.is_action_just_pressed("Rotate"):
 		objectRotation += 90
 		objectRotation = wrapf(objectRotation, 0, 360)
 		print(objectRotation)
-	if Input.is_action_just_pressed("Swap"):
-		buildMode += 1
-		buildMode = wrapi(buildMode, 0, 4)
-		ResetHighlightedCells()
-		ResetPreview()
-		ResetDeletionObj()
-		ResetDeletionObjects()
-		ResetDeletionCells()
 	if Input.is_action_just_pressed("DeleteMode"):
 		ResetDeletionObjects()
 		ResetHighlightedCells()
@@ -153,46 +169,51 @@ func InputManager():
 		ResetDeletionCells()
 		ResetPreview()
 		buildMode = 0
+		Global.uiSys.HideBuildShopMenus()
 	if buildMode == 0 and Input.is_action_just_released("Place"):
 		ResetDeletionCells()
 		ResetDeletionObj()
 		if objectsToDelete.size() > 0:
 			DeleteObjects()
-		
-	if Input.is_action_just_pressed("Floor Up"):
-		ResetDeletionObjects()
-		ResetHighlightedCells()
-		ResetDeletionObj()
-		ResetDeletionCells()
-		ResetPreview()
-		currentFloor += 1
-		currentFloor = clampi(currentFloor, 0, Global.gridSys.maxFloor)
-		Global.gridSys.gridBody.position.y += Global.gridSys.wallHeight
-		Global.gridSys.gridBody.position.y = clampi(
-			Global.gridSys.gridBody.position.y,
-			0,
-			Global.gridSys.maxFloor * Global.gridSys.wallHeight
-		)
-		HideFloors()
-	if Input.is_action_just_pressed("Floor Down"):
-		ResetDeletionObjects()
-		ResetHighlightedCells()
-		ResetDeletionObj()
-		ResetDeletionCells()
-		ResetPreview()
-		currentFloor -= 1
-		currentFloor = clampi(currentFloor, 0, Global.gridSys.maxFloor)
-		Global.gridSys.gridBody.position.y -= Global.gridSys.wallHeight
-		Global.gridSys.gridBody.position.y = clampi(
-			Global.gridSys.gridBody.position.y,
-			0,
-			Global.gridSys.maxFloor * Global.gridSys.wallHeight
-		)
-		HideFloors()
-	
-	if Input.is_action_just_pressed("CheckoutPlace_Temp"):
-		currentCellPref = basicCheckoutPref
-		#currentCellPreviewPref = basicCheckoutPref
+	#if Input.is_action_just_pressed("Floor Up"):
+		#ResetDeletionObjects()
+		#ResetHighlightedCells()
+		#ResetDeletionObj()
+		#ResetDeletionCells()
+		#ResetPreview()
+		#currentFloor += 1
+		#currentFloor = clampi(currentFloor, 0, Global.gridSys.maxFloor)
+		#Global.gridSys.gridBody.position.y += Global.gridSys.wallHeight
+		#Global.gridSys.gridBody.position.y = clampi(
+			#Global.gridSys.gridBody.position.y,
+			#0,
+			#Global.gridSys.maxFloor * Global.gridSys.wallHeight
+		#)
+		#HideFloors()
+	#if Input.is_action_just_pressed("Floor Down"):
+		#ResetDeletionObjects()
+		#ResetHighlightedCells()
+		#ResetDeletionObj()
+		#ResetDeletionCells()
+		#ResetPreview()
+		#currentFloor -= 1
+		#currentFloor = clampi(currentFloor, 0, Global.gridSys.maxFloor)
+		#Global.gridSys.gridBody.position.y -= Global.gridSys.wallHeight
+		#Global.gridSys.gridBody.position.y = clampi(
+			#Global.gridSys.gridBody.position.y,
+			#0,
+			#Global.gridSys.maxFloor * Global.gridSys.wallHeight
+		#)
+		#HideFloors()
+
+func SwapBuildMode(mode : int):
+	buildMode = mode
+	#buildMode = wrapi(buildMode, 0, 4)
+	ResetHighlightedCells()
+	ResetPreview()
+	ResetDeletionObj()
+	ResetDeletionObjects()
+	ResetDeletionCells()
 	
 func ResetEverything():
 	ResetDeletionCells()
@@ -229,6 +250,9 @@ func MouseRaycast():
 			intersection["position"].x, 
 			intersection["position"].z
 			)
+		if Global.mouseHover:
+			ResetEverything()
+			return
 		if buildMode == 0:
 			if ((intersection["collider"].get_parent().get_parent() in floorObjects[currentFloor]
 			or intersection["collider"].get_parent().get_parent() in floorEdges[currentFloor]
@@ -607,6 +631,12 @@ func CellPreview(point : Vector2):
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newStruct = currentCellPref.instantiate()
 					
+					# For saving
+					newStruct.add_to_group("Persist", true)
+					newStruct.set_meta("cells", previewStructures[struct]["cells"])
+					newStruct.set_meta("edges", previewStructures[struct]["edges"])
+					newStruct.set_meta("currentFloor", currentFloor)
+					
 					# To group certain structures
 					if newStruct.is_in_group("Shelf"):
 						get_node("Shelves").add_child(newStruct)
@@ -614,7 +644,7 @@ func CellPreview(point : Vector2):
 						get_node("Checkouts").add_child(newStruct)
 					else:
 						add_child(newStruct)
-						
+					
 					floorObjects[currentFloor].append(newStruct)
 					newStruct.rotation_degrees = previewStructures[struct]["rotation"]
 					newStruct.position = struct
@@ -802,11 +832,15 @@ func EdgePreview(point : Vector2):
 					var newWall = currentEdgePref.instantiate()
 					
 					add_child(newWall)
+					newWall.set_meta("edges", previewStructures[struct]["edges"])
+					newWall.set_meta("currentFloor", currentFloor)
+					
 					floorEdges[currentFloor].append(newWall)
 					newWall.rotation_degrees = previewStructures[struct]["rotation"]
 					newWall.scale = ZFightFix(gridPos, Global.gridSys.floorEdgeDics[currentFloor])
 					newWall.position = struct
 					newWall.add_to_group("Edge", true)
+					newWall.add_to_group("Persist", true)
 					Global.gridSys.DuplicateMaterial(newWall)
 					
 					var storageEdge : Vector2 
@@ -950,10 +984,14 @@ func FloorPreview(point : Vector2):
 					var newStruct = currentFloorPref.instantiate()
 					
 					add_child(newStruct)
+					newStruct.set_meta("cells", gridPos)
+					newStruct.set_meta("currentFloor", currentFloor)
+					
 					floorFloors[currentFloor].append(newStruct)
 					newStruct.rotation_degrees = previewStructures[struct]["rotation"]
 					newStruct.position = struct
 					newStruct.add_to_group("Floor", true)
+					newStruct.add_to_group("Persist", true)
 					Global.gridSys.DuplicateMaterial(newStruct)
 					
 					if Global.gridSys.floorGridDics[currentFloor][gridPos]["floorData"]:
@@ -1588,8 +1626,5 @@ func HideFloors():
 		#add_child(newObj.instantiate())
 		#
 		
-func SetPackedSceneOwnership(parent : Node3D, recursiveChild):
-	for child in recursiveChild.get_children():
-		child.set_owner(parent)
-		SetPackedSceneOwnership(parent, child)
+
 	
