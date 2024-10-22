@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dvelhq2xyisy3"]
+[gd_scene load_steps=3 format=3 uid="uid://dvelhq2xyisy3"]
 
 [ext_resource type="Script" path="res://Main/Systems/SystemUI.gd" id="1_auu13"]
+[ext_resource type="PackedScene" uid="uid://wwf0qwwy02b2" path="res://UI/Scenes/StockShop.tscn" id="2_csm31"]
 
 [node name="UISystem" type="Control"]
 layout_mode = 3
@@ -97,15 +98,26 @@ theme_override_constants/separation = 0
 
 [node name="BuildObjectsMenu" type="VBoxContainer" parent="BuildMenus"]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -335.0
+offset_left = 171.0
 offset_top = -68.0
-offset_right = -295.0
+offset_right = 211.0
 offset_bottom = -28.0
-grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 0
+
+[node name="MoneyLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 32
+
+[node name="StockShop" parent="." instance=ExtResource("2_csm31")]
+layout_mode = 1

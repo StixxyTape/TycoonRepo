@@ -169,7 +169,7 @@ func InputManager():
 		ResetDeletionCells()
 		ResetPreview()
 		buildMode = 0
-		Global.uiSys.HideBuildShopMenus()
+		SwapBuildMode(0)
 	if buildMode == 0 and Input.is_action_just_released("Place"):
 		ResetDeletionCells()
 		ResetDeletionObj()
@@ -628,6 +628,13 @@ func CellPreview(point : Vector2):
 					if blockingInteractionSpot:
 						continue
 					
+					var price : int = structureDic[currentCellPref]["cost"]
+					if Global.playerMoney < price:
+						continue
+					else:
+						Global.playerMoney -= price
+					Global.UpdateUI()
+					
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newStruct = currentCellPref.instantiate()
 					
@@ -636,6 +643,7 @@ func CellPreview(point : Vector2):
 					newStruct.set_meta("cells", previewStructures[struct]["cells"])
 					newStruct.set_meta("edges", previewStructures[struct]["edges"])
 					newStruct.set_meta("currentFloor", currentFloor)
+					newStruct.set_meta("dicKey", currentCellPref)
 					
 					# To group certain structures
 					if newStruct.is_in_group("Shelf"):
@@ -1379,7 +1387,10 @@ func DeleteObjects():
 			ResetDicEntry(edgePoint)
 			floorEdges[currentFloor].erase(objMesh.get_parent())
 			
-		else:			
+		else:
+			var priceRefund : int = structureDic[objMesh.get_parent().get_meta("dicKey")]["cost"] * .8
+			Global.playerMoney += priceRefund
+			Global.UpdateUI()
 			if objMesh.get_parent().is_in_group("HasInteractionSpots"):
 				if objMesh.get_parent().is_in_group("Shelf"):
 					for spot in objMesh.get_parent().get_node("InteractionSpots").get_children():
@@ -1438,7 +1449,7 @@ func ZFightFix(victim : Vector2, dic : Dictionary):
 	var newScale : Vector3 = Vector3(1, 1, 1)
 	
 	# Reduce the z scale for to prevent edge fighting on corners
-	newScale.z = .999
+	newScale.z = .998
 
 	var neighbourNeg : Vector2
 	var neighbourPos : Vector2
@@ -1465,7 +1476,7 @@ func ZFightFix(victim : Vector2, dic : Dictionary):
 		neighbourPosXScale = round(neighbourPosXScale)
 		neighbourPosXScale /= 1000
 	
-	var scales : Array = [1.001, 1, 0.999]
+	var scales : Array = [1.002, 1, 0.998]
 	
 	for scale in scales:
 		if neighbourNegXScale == scale or neighbourPosXScale == scale:

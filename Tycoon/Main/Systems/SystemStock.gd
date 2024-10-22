@@ -42,24 +42,28 @@ func EstablishStockInventory():
 		"name" : "Canned Goods",
 		"amount" : 9999,
 		"category" : "Food",
-		"prefab" : preload("res://Models/Stock/CannedGood.gltf")
+		"prefab" : preload("res://Models/Stock/CannedGood.gltf"),
+		"purchasePrice" : 2,
+		"sellPrice" : 5
 	}
 	stockInventory[002] = {
-		"name" : "Fresh Produce",
-		"amount" : 0,
-		"category" : "Drink"
-	}
-	stockInventory[003] = {
-		"name" : "Snacks",
-		"amount" : 0,
-		"category" : "Food"
-	}
-	stockInventory[004] = {
 		"name" : "Drinks",
 		"amount" : 9999,
 		"category" : "Drink",
-		"prefab" : preload("res://Models/Stock/Drink.gltf")
+		"prefab" : preload("res://Models/Stock/Drink.gltf"),
+		"purchasePrice" : 3,
+		"sellPrice" : 7
 	}
+	#stockInventory[003] = {
+		#"name" : "Fresh Produce",
+		#"amount" : 0,
+		#"category" : "Drink"
+	#}
+	#stockInventory[004] = {
+		#"name" : "Snacks",
+		#"amount" : 0,
+		#"category" : "Food"
+	#}
 
 # A function that handles raycasting to the 3D grid and logic for deleting/building
 func MouseRaycast():
@@ -93,14 +97,16 @@ func MouseRaycast():
 				Global.stocking = true
 				currentShelf = colliderObj.get_parent().get_parent()
 				cam.TweenCamera(currentShelf, 1.5, .8)
-				Global.uiSys.CreateReturnButton()
+				Global.uiSys.ResetUI()
+				Global.uiSys.CreateReturnButton(Global.stockSys.ExitStock)
 			elif Global.stocking:
 				if colliderObj.get_parent().is_in_group("ShelfLevel"):
 					if colliderObj.get_parent().get_parent().get_parent() == currentShelf:
 						currentShelfLevel = colliderObj.get_parent()
 						Global.uiSys.ShelfUpdate(currentShelfLevel)
-						Global.uiSys.CloseStockMenu()
+						Global.uiSys.ResetUI()
 						Global.uiSys.OpenStockMenu(currentShelfLevel)
+						Global.uiSys.CreateReturnButton(Global.stockSys.ExitStock)
 					#else:
 						#currentShelf = colliderObj.get_parent().get_parent().get_parent()
 						#cam.TweenCamera(currentShelf, 1.5, .8)
@@ -113,8 +119,8 @@ func MouseRaycast():
 						colliderObj.get_parent().get_parent().get_node("ShelfLevels").ActivateShelfLevels()
 						currentShelf = colliderObj.get_parent().get_parent()
 						cam.TweenCamera(currentShelf, 1.5, .8)
-						Global.uiSys.CloseStockMenu()
-						Global.uiSys.CreateReturnButton()
+						Global.uiSys.ResetUI()
+						Global.uiSys.CreateReturnButton(Global.stockSys.ExitStock)
 	else:
 		ResetRayCol()
 		
@@ -165,7 +171,7 @@ func StockCalc(item, shelf, itemsToStock, itemsAvailableToStock):
 		stockInventory[item]["amount"] -= itemsAvailableToStock
 
 func ExitStock():
-	Global.uiSys.CloseStockMenu()
+	Global.uiSys.MenuUpdate()
 	currentShelf.get_node("ShelfLevels").DeactivateShelfLevels()
 	currentShelf = null
 	currentShelfLevel = null
@@ -178,7 +184,7 @@ func FullyStockShelf(shelf : Node3D):
 	for child in shelf.get_parent().get_children():
 		StockShelf(itemToStock, child)
 		if itemToStock == 001:
-			itemToStock = 004
+			itemToStock = 002
 		else:
 			itemToStock = 001
 	

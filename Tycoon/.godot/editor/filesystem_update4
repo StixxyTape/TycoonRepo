@@ -6,8 +6,7 @@ res://Models/Building/Structure/WallTile/WallMat.tres
 res://Models/Building/Structure/DoubleDoor/DoubleDoorMat.tres
 res://Facilities/Checkouts/BasicCheckout.tscn
 res://Shelves/BasicShelf.tscn
+res://UI/Scenes/StockShop.tscn
 res://Main/Scenes/World.tscn
 res://Main/Scenes/UISystem.tscn
-res://Main/Scripts/SaveLoad.gd
 res://Main/Systems/SystemBuild.gd
-res://Main/Systems/SystemUI.gd

@@ -33,11 +33,14 @@ func Scan(stockType : int):
 	itemTween.set_trans(Tween.TRANS_QUAD)
 	
 	itemTween.tween_property(newItem, "position", endPoint, scanTime)
+	
 	await itemTween.finished
 	
 	newItem.queue_free()
-	
 	scanned.emit()
+
+	Global.playerMoney += Global.stockSys.stockInventory[stockType]["sellPrice"]
+	Global.UpdateUI()
 
 func UpdateQueue():
 	queueSpotList.clear()

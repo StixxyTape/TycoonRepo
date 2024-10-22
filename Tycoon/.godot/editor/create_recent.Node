@@ -1,4 +1,6 @@
 VBoxContainer
+Button
+Label
 Control
 Node3D
 CollisionShape3D
@@ -9,6 +11,4 @@ NavigationAgent3D
 MeshInstance3D
 WorldEnvironment
 Node
-Label
 HBoxContainer
-Button
