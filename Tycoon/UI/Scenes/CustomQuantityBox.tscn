@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://co6ofk7jbibec"]
+
+[ext_resource type="Script" path="res://UI/Scripts/UIQuantityBox.gd" id="1_fego8"]
+
+[node name="CustomQuantityBox" type="Button"]
+offset_right = 8.0
+offset_bottom = 8.0
+toggle_mode = true
+script = ExtResource("1_fego8")

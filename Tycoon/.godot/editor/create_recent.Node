@@ -1,7 +1,8 @@
-VBoxContainer
-Button
 Label
+Button
 Control
+HBoxContainer
+VBoxContainer
 Node3D
 CollisionShape3D
 StaticBody3D
@@ -11,4 +12,3 @@ NavigationAgent3D
 MeshInstance3D
 WorldEnvironment
 Node
-HBoxContainer

@@ -40,7 +40,7 @@ func LoadGame():
 				continue
 			
 			if loadingPlayerData:
-				pass
+				Global.playerMoney = dicData["Money"]
 			elif loadingStockData:
 				if dicData["stockType"] == 000:
 					continue
@@ -152,8 +152,10 @@ func SaveGame():
 
 func SavePlayerData(saveFile):
 	saveFile.store_line(JSON.stringify("PlayerData"))
-	#var playerDataDic : Dictionary = {}
-	#saveFile.store_line(JSON.stringify(playerDataDic))
+	var playerDataDic : Dictionary = {
+		"Money" : Global.playerMoney
+	}
+	saveFile.store_line(JSON.stringify(playerDataDic))
 	
 func SaveStockData(saveFile):
 	saveFile.store_line(JSON.stringify("StockData"))

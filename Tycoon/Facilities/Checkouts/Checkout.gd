@@ -2,7 +2,7 @@ extends Node3D
 
 @export var scanTime : float = 1
 @export var queueGap : float = .7
-@export var queueDistFromWall : float = .2
+@export var queueDistFromWall : float = .4
 
 @onready var startPoint : Vector3 = $ConveyorPoints/StartPoint.position
 @onready var endPoint : Vector3 = $ConveyorPoints/EndPoint.position

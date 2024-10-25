@@ -1,0 +1,123 @@
+[gd_scene load_steps=3 format=3 uid="uid://dvelhq2xyisy3"]
+
+[ext_resource type="Script" path="res://Main/Systems/SystemUI.gd" id="1_auu13"]
+[ext_resource type="PackedScene" uid="uid://wwf0qwwy02b2" path="res://UI/Scenes/StockShop.tscn" id="2_csm31"]
+
+[node name="UISystem" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_auu13")
+
+[node name="Stock" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Shelf" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -40.0
+offset_right = 40.0
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Shelf"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Shelf/HBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Shelf"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Shelf/HBoxContainer2"]
+layout_mode = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Shelf"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Shelf/HBoxContainer3"]
+layout_mode = 2
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="Shelf"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Shelf/HBoxContainer4"]
+layout_mode = 2
+
+[node name="StockMenu" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -20.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="SaveMenu" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 40.0
+grow_horizontal = 0
+
+[node name="BuildMenus" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BuildMenu" type="VBoxContainer" parent="BuildMenus"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -502.0
+offset_top = -68.0
+offset_right = -462.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 0
+
+[node name="BuildObjectsMenu" type="VBoxContainer" parent="BuildMenus"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 171.0
+offset_top = -68.0
+offset_right = 211.0
+offset_bottom = -28.0
+grow_vertical = 0
+theme_override_constants/separation = 0
+
+[node name="MoneyLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 32
+
+[node name="StockShop" parent="." instance=ExtResource("2_csm31")]
+layout_mode = 1

@@ -7,10 +7,14 @@ func _ready() -> void:
 	ResetUI()
 	MenuUpdate()
 	EstablishUI()
-
+	
 func ResetUI():
 	for child in get_tree().get_nodes_in_group("UIReset"):
 		child.queue_free()
+		
+	$StockShop.currentStockType = 000
+	$StockShop.currentQuantity = 0
+	$StockShop.basket.clear()
 	
 func MenuUpdate():
 	ResetUI()

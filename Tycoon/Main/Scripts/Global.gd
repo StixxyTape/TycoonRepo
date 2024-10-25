@@ -46,6 +46,7 @@ func GlobalInputManager():
 	if Input.is_action_just_pressed("SwitchMode"):
 		buildMode = !buildMode
 		stockMode = !stockMode
+		camCanMove = true
 		switchSignal.emit()
 	if Input.is_action_just_pressed("CustomerSpawn"):
 		spawnCustomerSignal.emit()

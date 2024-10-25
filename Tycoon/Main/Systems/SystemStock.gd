@@ -40,7 +40,7 @@ func EstablishStockInventory():
 	}
 	stockInventory[001] = {
 		"name" : "Canned Goods",
-		"amount" : 9999,
+		"amount" : 20,
 		"category" : "Food",
 		"prefab" : preload("res://Models/Stock/CannedGood.gltf"),
 		"purchasePrice" : 2,
@@ -48,7 +48,7 @@ func EstablishStockInventory():
 	}
 	stockInventory[002] = {
 		"name" : "Drinks",
-		"amount" : 9999,
+		"amount" : 30,
 		"category" : "Drink",
 		"prefab" : preload("res://Models/Stock/Drink.gltf"),
 		"purchasePrice" : 3,
