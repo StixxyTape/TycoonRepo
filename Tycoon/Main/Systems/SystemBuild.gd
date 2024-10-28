@@ -114,7 +114,7 @@ var structureDic : Dictionary
 func _ready() -> void:
 	EstablishStructureDic()
 	
-	Global.switchSignal.connect(ResetEverything)
+	Global.switchSystemSignal.connect(ResetEverything)
 	
 	currentCellPref = basicShelfPref
 	#currentCellPreviewPref = basicShelfPref
@@ -134,16 +134,16 @@ func _ready() -> void:
 
 func _process(delta):
 	currentHeight = currentFloor * Global.gridSys.wallHeight
-	if Global.buildMode:
+	if Global.currentMode == 1:
 		MouseRaycast()
 		InputManager()
 	
 func EstablishStructureDic():
-	structureDic[basicShelfPref] = {
+	structureDic[str(basicShelfPref)] = {
 		"name" : "Double Shelf",
 		"cost" : 100
 	}
-	structureDic[basicCheckoutPref] = {
+	structureDic[str(basicCheckoutPref)] = {
 		"name" : "Checkout",
 		"cost" : 200
 	}
@@ -253,6 +253,10 @@ func MouseRaycast():
 		if Global.mouseHover:
 			ResetEverything()
 			return
+		if round(colPoint) not in Global.landSys.ownedCells:
+			if buildMode == 0 and objectsToDelete.size() == 0:
+				ResetEverything()
+				return
 		if buildMode == 0:
 			if ((intersection["collider"].get_parent().get_parent() in floorObjects[currentFloor]
 			or intersection["collider"].get_parent().get_parent() in floorEdges[currentFloor]
@@ -412,6 +416,8 @@ func FloorDelete(colPoint : Vector2):
 	objectsToDelete.clear()
 	
 	for cell in intersectingCells:
+		if cell not in Global.landSys.ownedCells:
+			continue
 		if Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]:
 			Global.gridSys.GetMaterial(
 				Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]
@@ -616,8 +622,14 @@ func CellPreview(point : Vector2):
 					#For clearing space for interaction spots
 					if !previewStructures[struct]["interactionCanPlace"]:
 						continue
+						
 					var blockingInteractionSpot : bool = false
+					var notInOwnedCells : bool = false
+					
 					for cell in previewStructures[struct]["cells"]:
+						if cell not in Global.landSys.ownedCells:
+							notInOwnedCells = true
+							break
 						if Global.gridSys.floorGridDics[currentFloor][cell]["interactionSpot"] > 0:
 							blockingInteractionSpot = true
 							break
@@ -625,10 +637,10 @@ func CellPreview(point : Vector2):
 						if Global.gridSys.floorGridDics[currentFloor][cell]["cellData"] != null:
 							blockingInteractionSpot = true
 							break
-					if blockingInteractionSpot:
+					if blockingInteractionSpot or notInOwnedCells:
 						continue
 					
-					var price : int = structureDic[currentCellPref]["cost"]
+					var price : int = structureDic[str(currentCellPref)]["cost"]
 					if Global.playerMoney < price:
 						continue
 					else:
@@ -643,7 +655,7 @@ func CellPreview(point : Vector2):
 					newStruct.set_meta("cells", previewStructures[struct]["cells"])
 					newStruct.set_meta("edges", previewStructures[struct]["edges"])
 					newStruct.set_meta("currentFloor", currentFloor)
-					newStruct.set_meta("dicKey", currentCellPref)
+					newStruct.set_meta("dicKey", str(currentCellPref))
 					
 					# To group certain structures
 					if newStruct.is_in_group("Shelf"):
@@ -835,7 +847,24 @@ func EdgePreview(point : Vector2):
 			for struct in previewStructures:
 				if is_instance_valid(previewStructures[struct]["previewObj"]):
 					previewStructures[struct]["previewObj"].queue_free()
-				
+					
+					var notInOwnedCells : bool = false
+					
+					for edge in previewStructures[struct]["edges"]:
+						if round(edge.x) - edge.x != 0:
+							var cellsToCheck : Array = [Vector2(edge.x + .5, edge.y), Vector2(edge.x - .5, edge.y)]
+							if (cellsToCheck[0] not in Global.landSys.ownedCells and 
+								cellsToCheck[1] not in Global.landSys.ownedCells):
+								notInOwnedCells = true
+						elif round(edge.y) - edge.y != 0:
+							var cellsToCheck : Array = [Vector2(edge.x, edge.y + .5), Vector2(edge.x, edge.y - .5)]
+							if (cellsToCheck[0] not in Global.landSys.ownedCells and 
+								cellsToCheck[1] not in Global.landSys.ownedCells):
+								notInOwnedCells = true
+					
+					if notInOwnedCells:
+						continue
+						
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newWall = currentEdgePref.instantiate()
 					
@@ -985,7 +1014,8 @@ func FloorPreview(point : Vector2):
 				if is_instance_valid(previewStructures[struct]["previewObj"]):
 					previewStructures[struct]["previewObj"].queue_free()
 					
-					if Global.gridSys.floorGridDics[currentFloor][Vector2(struct.x, struct.z)]["floorData"]:
+					if (Global.gridSys.floorGridDics[currentFloor][Vector2(struct.x, struct.z)]["floorData"] or
+						Vector2(struct.x, struct.z) not in Global.landSys.ownedCells):
 						continue
 						
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)

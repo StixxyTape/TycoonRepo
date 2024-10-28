@@ -3,7 +3,8 @@ extends Control
 var resetGroup : String = "UIReset"
 
 func _ready() -> void:
-	Global.switchSignal.connect(MenuUpdate)
+	Global.switchSystemSignal.connect(MenuUpdate)
+	Global.landSys.plotBuySignal.connect(OpenPlotBuyMenu)
 	ResetUI()
 	MenuUpdate()
 	EstablishUI()
@@ -18,11 +19,15 @@ func ResetUI():
 	
 func MenuUpdate():
 	ResetUI()
-	if !Global.buildMode:
-		$StockShop.CreateStockShopButton()
-	else:
+	
+	if Global.currentMode == 1:
 		OpenBuildMenu()
-
+	elif Global.currentMode == 2:
+		$StockShop.CreateStockShopButton()
+		
+	EstablishPhaseButton()
+	EstablishSaveLoad()
+	
 func MoneyUpdate():
 	$MoneyLabel.text = str("$", Global.playerMoney)
 	
@@ -46,9 +51,6 @@ func ShelfUpdate(shelf : Node3D):
 
 func EstablishUI():
 	EstablishStock()
-	EstablishSaveLoad()
-	#HideBuildShopMenus()
-	#
 	MoneyUpdate()
 	
 func EstablishStock():
@@ -73,6 +75,7 @@ func EstablishSaveLoad():
 	saveButton.focus_mode = Control.FOCUS_NONE
 	$SaveMenu.add_child(saveButton)
 	
+	saveButton.add_to_group(resetGroup)
 	saveButton.pressed.connect(SaveLoad.SaveGame)
 	ConnectMouseHover(saveButton)
 	
@@ -81,9 +84,47 @@ func EstablishSaveLoad():
 	loadButton.focus_mode = Control.FOCUS_NONE
 	$SaveMenu.add_child(loadButton)
 	
+	loadButton.add_to_group(resetGroup)
 	loadButton.pressed.connect(SaveLoad.LoadGame)
 	ConnectMouseHover(loadButton)
 
+func EstablishPhaseButton():
+	var phaseButton : Button = Button.new()
+	phaseButton.text = "Move To Action Phase"
+	phaseButton.add_to_group(resetGroup)
+	
+	phaseButton.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
+	phaseButton.position.x += -50
+	phaseButton.position.y += -75
+	
+	phaseButton.focus_mode = Control.FOCUS_NONE
+	phaseButton.pressed.connect(Global.ChangePhase.bind(true))
+	
+	ConnectMouseHover(phaseButton)
+	add_child(phaseButton)
+
+func EstablishTimeControls():
+	var timeControlBox : HBoxContainer = HBoxContainer.new()
+	timeControlBox.add_to_group(resetGroup)
+	
+	add_child(timeControlBox)
+	
+	var speedOptions : Array = [1, 2, 4]
+	
+	for speed in speedOptions:
+		var newTimeButton : Button = Button.new()
+		
+		newTimeButton.text = str(speed, "x speed")
+		newTimeButton.focus_mode = Control.FOCUS_NONE
+		newTimeButton.pressed.connect(Global.ChangeActionTime.bind(speed))
+
+		ConnectMouseHover(newTimeButton)
+		timeControlBox.add_child(newTimeButton)
+		
+	# We set the preset after adding children to account for it not being misaligned
+	timeControlBox.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
+	timeControlBox.position.y = 50
+	
 func OpenBuildMenu():
 	ResetUI()
 	
@@ -182,10 +223,22 @@ func OpenStockMenu(shelf : Node3D):
 			shelf
 		))
 		ConnectMouseHover(stockButton)
-	#CreateReturnButton(Global.stockSys.ExitStock)
 
-func EnableStockShop():
-	$StockShop.visible = true
+func OpenPlotBuyMenu(plot):
+	var plotButton = Button.new()
+	plotButton.add_to_group(resetGroup)
+	plotButton.text = "Buy this plot for $" + str(Global.landPrice)
+	add_child(plotButton)
+	
+	plotButton.set_anchors_and_offsets_preset(PRESET_CENTER)
+	
+	plotButton.pressed.connect(Global.landSys.BuyPlot.bind(plot))
+	plotButton.pressed.connect(MenuUpdate)
+	ConnectMouseHover(plotButton)
+	
+	var returnButton = CreateReturnButton(MenuUpdate)
+	returnButton.pressed.connect(Global.landSys.ResetSelectedPlot)
+	returnButton.pressed.connect(Global.landSys.ResetHighlightedPlot)
 	
 func ConnectMouseHover(element):
 	element.mouse_entered.connect(Global.SetHoverMode.bind(
@@ -207,3 +260,6 @@ func CreateReturnButton(ButtonConnection):
 	returnButton.position.y = 50
 	returnButton.pressed.connect(ButtonConnection)
 	ConnectMouseHover(returnButton)
+	
+	# return the button incase extra connections need to be made
+	return returnButton

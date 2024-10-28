@@ -2,7 +2,8 @@ extends Node3D
 
 @onready var gridBody : StaticBody3D = $StaticBody3D
 
-var gridSize : Vector2 = Vector2(15, 15)
+# Set to multiples of six for land plots
+var gridSize : Vector2 = Vector2(24, 24)
 
 # A dictionary for storing all the grid data
 var gridDic : Dictionary
@@ -29,7 +30,13 @@ var floorEdgeDics : Array = []
 
 #endregion
 
+#region Signals
+signal finishedAssigningLands
+
+#endregion
+
 func _ready():
+	finishedAssigningLands.connect(Global.landSys.EstablishPlots)
 	EstablishGrid()
 
 func EstablishGrid():
@@ -61,6 +68,11 @@ func EstablishGrid():
 			newFloor.scale = Vector3(1, 1, 1)
 			get_node("../BuildSystem").add_child(newFloor)
 			
+			if (((int(x) - 3) % 6 == 0 or (x-3) == 0) and
+				((int(y) -3) % 6 == 0 or (y-3) == 0)):
+				Global.landSys.availableLandPlots.append(Vector2(x -1, y - 1))
+				
+	finishedAssigningLands.emit()
 	floorGridDics.append(gridDic)
 	
 	for cell in gridDic:

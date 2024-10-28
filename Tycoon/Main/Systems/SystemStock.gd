@@ -20,13 +20,13 @@ var currentShelfLevel : Node3D
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	Global.switchSignal.connect(ResetEverything)
+	Global.switchSystemSignal.connect(ResetEverything)
 	
 	EstablishCategories()
 	EstablishStockInventory()
 	
 func _process(delta: float) -> void:
-	if Global.stockMode:
+	if Global.currentMode == 2:
 		MouseRaycast()
 		
 func EstablishCategories():

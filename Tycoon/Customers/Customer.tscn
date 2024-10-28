@@ -10,8 +10,7 @@
 
 [node name="Customer" type="Node3D" groups=["Customer"]]
 script = ExtResource("1_6jasd")
-movementSpeed = 5.0
-pathfindRange = 0.05
+basePathfindRange = 0.05
 pathfindEffort = 1000
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]

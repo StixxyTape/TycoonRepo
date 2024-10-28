@@ -1,0 +1,62 @@
+[gd_scene load_steps=8 format=3 uid="uid://8wo07waiikgl"]
+
+[ext_resource type="Script" path="res://LandPlots/LandPlot.gd" id="1_jkkkq"]
+[ext_resource type="Texture2D" uid="uid://j06vi6kwxtg6" path="res://VFX/PlotGrid/BuildChunkEmpty.png" id="2_3jj23"]
+[ext_resource type="Shader" path="res://VFX/PlotGrid/BuildChunk.gdshader" id="2_ye7tr"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_312kl"]
+size = Vector3(5.9, 1, 5.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6w4gx"]
+size = Vector3(5.9, 1, 5.9)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_pvkl2"]
+size = Vector2(1.5, 5.9)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6e7lx"]
+render_priority = 0
+shader = ExtResource("2_ye7tr")
+shader_parameter/newColor = Vector3(1, 1, 1)
+
+[node name="LandPlot" type="Node3D" groups=["GridVisual"]]
+script = ExtResource("1_jkkkq")
+
+[node name="BoundsMesh" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("BoxMesh_312kl")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 16
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("BoxShape3D_6w4gx")
+
+[node name="GridChunk" type="Sprite3D" parent="."]
+transform = Transform3D(3.125, 0, 0, 0, -1.36598e-07, 1, 0, -3.125, -4.37114e-08, 0, 0.05, 0)
+double_sided = false
+texture_filter = 0
+texture = ExtResource("2_3jj23")
+
+[node name="Edges" type="Node3D" parent="."]
+visible = false
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Edges"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, -2.9, 0.6, 0)
+mesh = SubResource("PlaneMesh_pvkl2")
+surface_material_override/0 = SubResource("ShaderMaterial_6e7lx")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Edges"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 2.9, 0.6, 0)
+mesh = SubResource("PlaneMesh_pvkl2")
+surface_material_override/0 = SubResource("ShaderMaterial_6e7lx")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="Edges"]
+transform = Transform3D(1.91069e-15, 4.37114e-08, 1, 1, -4.37114e-08, 0, 4.37114e-08, 1, -4.37114e-08, 0, 0.6, 2.9)
+mesh = SubResource("PlaneMesh_pvkl2")
+surface_material_override/0 = SubResource("ShaderMaterial_6e7lx")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="Edges"]
+transform = Transform3D(1.91069e-15, 4.37114e-08, 1, 1, -4.37114e-08, 0, 4.37114e-08, 1, -4.37114e-08, 0, 0.6, -2.9)
+mesh = SubResource("PlaneMesh_pvkl2")
+surface_material_override/0 = SubResource("ShaderMaterial_6e7lx")

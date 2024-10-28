@@ -22,6 +22,8 @@ func LoadGame():
 		var loadingStockData : bool = true
 		var loadingGridData : bool = true
 		var loadingBuildData : bool = true
+		var loadingPlotData : bool = true
+		
 		while saveFile.get_position() < saveFile.get_length():
 			var json = JSON.new()
 			var parseResult = json.parse(saveFile.get_line())
@@ -38,9 +40,14 @@ func LoadGame():
 			elif "BuildData" in dicData:
 				loadingGridData = false
 				continue
-			
+			elif "PlotData" in dicData:
+				print("huh")
+				loadingBuildData = false
+				continue
+				
 			if loadingPlayerData:
 				Global.playerMoney = dicData["Money"]
+				Global.landPrice = dicData["LandPrice"]
 			elif loadingStockData:
 				if dicData["stockType"] == 000:
 					continue
@@ -95,6 +102,7 @@ func LoadGame():
 				var newObj = load(dicData["fileName"]).instantiate()
 				newObj.position = Vector3(float(dicData["posX"]), float(dicData["posY"]), float(dicData["posZ"]))
 				newObj.rotation = StrToVec3(dicData["rotation"])
+				newObj.scale = StrToVec3(dicData["scale"])
 				newObj.set_meta("currentFloor", currentFloor)
 				for group in dicData["groups"]:
 					newObj.add_to_group(group, true)
@@ -106,6 +114,10 @@ func LoadGame():
 					Global.buildSys.floorObjects[currentFloor].append(newObj)
 				get_node(dicData["parent"]).add_child(newObj)
 				Global.gridSys.DuplicateMaterial(newObj)
+				
+				if "dicKey" in dicData:
+					newObj.set_meta("dicKey", dicData["dicKey"])
+					
 				if "edges" in dicData and "cells" in dicData:
 					var newCells : Array = []
 					for cell in dicData["cells"]:
@@ -139,7 +151,32 @@ func LoadGame():
 						shelfLevel.AutoStockCheck()
 						shelfLevel.ChangeStock()
 						indexCount += 1
-		
+			
+			elif loadingPlotData:
+				if "OwnedCells" in dicData:
+					Global.landSys.ownedCells.clear()
+					continue
+				elif "OwnedCell" in dicData:
+					Global.landSys.ownedCells.append(StrToVec2(dicData["OwnedCell"]))
+					continue
+			
+				if "GridVisualisation" in dicData:
+					Global.landSys.ResetHighlightedPlot()
+					Global.landSys.ResetSelectedPlot()
+					for node in get_tree().get_nodes_in_group("GridVisual"):
+						node.queue_free()
+				elif "GridChunk" in dicData:
+					var newNode = load(dicData["FilePath"]).instantiate()
+					var convertedPos : Vector2 = StrToVec2(dicData["Position"])
+					get_node(dicData["Parent"]).add_child(newNode)
+					newNode.position = Vector3(convertedPos.x, 0, convertedPos.y)
+					if dicData["GridChunk"]:
+						newNode.position.y = .05
+				
+				if "GridVisualisationFinished" in dicData:
+					Global.landSys.SwitchToLandMode()
+					Global.floatingGridSys.GridUpdate()
+						
 	Global.UpdateUI()
 	
 func SaveGame():
@@ -149,11 +186,13 @@ func SaveGame():
 	SaveStockData(saveFile)
 	SaveGrid(saveFile)
 	SaveBuilding(saveFile)
-
+	SavePlotData(saveFile)
+	
 func SavePlayerData(saveFile):
 	saveFile.store_line(JSON.stringify("PlayerData"))
 	var playerDataDic : Dictionary = {
-		"Money" : Global.playerMoney
+		"Money" : Global.playerMoney,
+		"LandPrice" : Global.landPrice
 	}
 	saveFile.store_line(JSON.stringify(playerDataDic))
 	
@@ -193,6 +232,7 @@ func SaveBuilding(saveFile):
 			"posY" : object.global_position.y,
 			"posZ" : object.global_position.z,
 			"rotation" : object.rotation,
+			"scale" : object.scale,
 			"currentFloor" : object.get_meta("currentFloor")
 		}
 		if object.is_in_group("Shelf"):
@@ -209,8 +249,30 @@ func SaveBuilding(saveFile):
 		if object.has_meta("edges"):
 			objDic[object.get_scene_file_path()]["edges"] = object.get_meta("edges")
 		
+		if object.has_meta("dicKey"):
+			objDic[object.get_scene_file_path()]["dicKey"] = object.get_meta("dicKey")
+			
 		saveFile.store_line(JSON.stringify(objDic[object.get_scene_file_path()]))
 
+func SavePlotData(saveFile):
+	saveFile.store_line(JSON.stringify("PlotData"))
+	saveFile.store_line(JSON.stringify(["OwnedCells"]))
+	for cell in Global.landSys.ownedCells:
+		var dicEntry : Dictionary = {
+			"OwnedCell" : cell
+		}
+		saveFile.store_line(JSON.stringify(dicEntry))
+	saveFile.store_line(JSON.stringify(["GridVisualisation"]))
+	for node in get_tree().get_nodes_in_group("GridVisual"):
+		var dicEntry : Dictionary = {
+			"GridChunk" : node.is_in_group("GridChunk"),
+			"Position" : Vector2(node.position.x, node.position.z),
+			"FilePath" : node.get_scene_file_path(),
+			"Parent" : node.get_parent().get_path()
+		}
+		saveFile.store_line(JSON.stringify(dicEntry))
+	saveFile.store_line(JSON.stringify(["GridVisualisationFinished"]))
+	
 func StrToVec2(string := "") -> Vector2:
 	if string:
 		var newStr: String = string

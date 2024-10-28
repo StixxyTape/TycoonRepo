@@ -1,8 +1,15 @@
 extends Node3D
 
 #region Pathfinding
-@export var movementSpeed : float = 0
-@export var pathfindRange : float = 0
+@export var baseMovementSpeed : float = 5
+var movementSpeed : float
+
+@export var baseAddBasketTime : float = .1
+var addBasketTime : float
+
+@export var basePathfindRange : float = 0
+var pathfindRange : float
+
 @export var pathfindEffort : int = 0
 
 var movingAlongPath : bool = false
@@ -36,10 +43,21 @@ var basket : Array = []
 #endregion
 
 func _ready() -> void:
+	Global.actionTimeSignal.connect(UpdateTimeScale)
 	get_parent().spotOpenedUp.connect(OpenedShelfSpot)
+	
+	movementSpeed = baseMovementSpeed * Global.actionPhaseTimeScale
+	addBasketTime = baseAddBasketTime / Global.actionPhaseTimeScale
+	pathfindRange = (basePathfindRange * Global.actionPhaseTimeScale) # x1.25 to prevent customers overshooting
+	
 	AssignShoppingList()
 	ChooseShelf()
 
+func UpdateTimeScale():
+	movementSpeed = baseMovementSpeed * Global.actionPhaseTimeScale
+	addBasketTime = baseAddBasketTime / Global.actionPhaseTimeScale
+	pathfindRange = basePathfindRange * Global.actionPhaseTimeScale
+	
 func _process(delta: float) -> void:
 	if movingAlongPath:
 		MoveToPath(delta)
@@ -47,7 +65,7 @@ func _process(delta: float) -> void:
 		QueueMoveToPath(delta)
 	elif movingToQueueSpace:
 		MoveToQueueSpace(delta)
-		
+
 func AssignShoppingList():
 	var categoryAmount : int = randi_range(2, 2)
 	var stockInventory : Dictionary = Global.stockSys.stockInventory
@@ -56,7 +74,7 @@ func AssignShoppingList():
 		if  randCategory not in shoppingCategories:
 			shoppingCategories[randCategory] = {
 				"addedToBasket" : false,
-				"amountToAdd" : randi_range(1, 8)
+				"amountToAdd" : randi_range(1, 4)
 			}
 			categoryAmount -= 1
 	
@@ -84,6 +102,17 @@ func ChooseShelf():
 						break
 						
 		if availableShelves.size() <= 0:
+			var canCheckout : bool = false
+			for key in shoppingCategories.keys():
+				if shoppingCategories[key]["addedToBasket"]:
+					canCheckout = true
+			if canCheckout:
+				lookingForShelf = false
+				ChooseCheckout()
+			else:
+				Global.customerSys.MoveToPrepPhaseCheck()
+				queue_free()
+				
 			return
 			
 		var shelfTarget : Node3D
@@ -275,27 +304,25 @@ func AddToBasket():
 			continue
 			
 		var category = Global.stockSys.stockInventory[child.stockType]["category"]
-		if category in shoppingCategories:
-			if child.GetShelfState().currentStock > 0 and !shoppingCategories[category]["addedToBasket"]:
+		if category in shoppingCategories and !shoppingCategories[category]["addedToBasket"]:
+			if child.GetShelfState().currentStock > 0:
 				#print("What I want: ", shoppingCategories[category]["amountToAdd"])
 				#print("Stock left: ", child.GetShelfState().currentStock)
 				if child.GetShelfState().currentStock >= shoppingCategories[category]["amountToAdd"]:
 					child.GetShelfState().currentStock -= shoppingCategories[category]["amountToAdd"]
 					for x in shoppingCategories[category]["amountToAdd"]:
-						await get_tree().create_timer(.1).timeout
+						await get_tree().create_timer(addBasketTime).timeout
 						child.CustomerUpdate(1)
 						basket.append(child.stockType)
-					#print("What I got when it had more: ", shoppingCategories[category]["amountToAdd"])
 				else:
 					var oldStockAmount : int = child.GetShelfState().currentStock
 					child.GetShelfState().currentStock = 0
 					for x in oldStockAmount:
-						await get_tree().create_timer(.1).timeout
+						await get_tree().create_timer(addBasketTime).timeout
 						child.CustomerUpdate(1)
 						basket.append(child.stockType)
-					#print("What I got when it had less: ", oldStockAmount)
 				shoppingCategories[category]["addedToBasket"] = true
-		
+				
 		child.CustomerUpdate(0)
 		
 	shelfInteractionSpots.SetInteractionSpot(interactionSpot, false)
@@ -389,4 +416,5 @@ func Checkout():
 		await currentCheckout.scanned
 	
 	currentCheckout.MoveQueue()
+	Global.customerSys.MoveToPrepPhaseCheck()
 	queue_free()

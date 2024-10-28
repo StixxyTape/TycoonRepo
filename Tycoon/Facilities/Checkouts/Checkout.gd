@@ -1,6 +1,8 @@
 extends Node3D
 
-@export var scanTime : float = 1
+@export var baseScanTime : float = 1
+var scanTime : float 
+
 @export var queueGap : float = .7
 @export var queueDistFromWall : float = .4
 
@@ -19,6 +21,20 @@ signal scanned
 # When the queue moves, update each customer's position
 signal queueUpdated
 
+func _ready() -> void:
+	Global.actionTimeSignal.connect(UpdateTimeScale)
+	
+	scanTime = baseScanTime
+	
+func UpdateTimeScale():
+	# To prevent increasing the checkout scan time multiple times
+	var newScanTime : float = baseScanTime / Global.actionPhaseTimeScale
+	if scanTime != newScanTime:
+		if is_instance_valid(itemTween):
+			var newTweenSpeed : float = scanTime / newScanTime
+			itemTween.set_speed_scale(newTweenSpeed)
+		scanTime = newScanTime
+			
 func Scan(stockType : int):
 	var itemMesh : PackedScene = Global.stockSys.stockInventory[stockType]["prefab"]
 	
