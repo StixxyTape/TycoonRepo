@@ -1,12 +1,9 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://c2cj2y2cle7hi"]
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://deec6l0l28u32"]
 
-[ext_resource type="Texture2D" uid="uid://c1da0wn3y0p4j" path="res://Models/Building/Structure/FloorTile/TestTexture.png" id="1_05db8"]
+[ext_resource type="Texture2D" uid="uid://qtwui5y4p84h" path="res://Models/Debug/GreenTexture.png" id="1_7cn5a"]
 
 [resource]
-resource_local_to_scene = true
 resource_name = "FloorMat"
-cull_mode = 2
-albedo_texture = ExtResource("1_05db8")
-metallic_specular = 0.0
+albedo_texture = ExtResource("1_7cn5a")
 roughness = 0.5
 texture_filter = 0

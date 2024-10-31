@@ -1,3 +1,7 @@
+res://VFX/WallHide
+res://Models/World/Road
+res://Models/World/Ground
+res://Models/Building/Structure/FloorTile
 res://
 res://VFX/BuildGrid
 C:/Users/jobul/Desktop
@@ -11,6 +15,5 @@ res://Models/Building/Structure/DoubleDoor
 res://Models/Characters/Bodies/Male
 res://Models/Building/Structure/WallTile
 res://Main/Scripts
-res://Models/Building/Structure/FloorTile
 res://Models/Building/Structure
 res://Main

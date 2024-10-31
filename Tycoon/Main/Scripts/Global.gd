@@ -66,7 +66,7 @@ func _process(delta: float) -> void:
 func GlobalInputManager():
 	if Input.is_action_just_pressed("SwitchMode") and preparationPhase:
 		currentMode += 1
-		currentMode = wrapi(currentMode, 0, 4)
+		currentMode = wrapi(currentMode, 0, 3)
 		print(currentMode)
 		camCanMove = true
 		switchSystemSignal.emit()

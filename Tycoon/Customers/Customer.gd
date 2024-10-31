@@ -130,7 +130,9 @@ func ChooseShelf():
 		PathFind(Vector2(
 			round(interactionSpot.global_position.x), round(interactionSpot.global_position.z)
 			))
-		
+	else:
+		Global.customerSys.MoveToPrepPhaseCheck()
+		queue_free()
 	
 func PathFind(targetPos : Vector2):
 	# Reset these variables
@@ -189,7 +191,8 @@ func PathFind(targetPos : Vector2):
 			
 			if offsetTile not in checkedTiles:
 				if offsetTile in gridDic:
-					if gridDic[offsetTile]["floorData"] == null or gridDic[offsetTile]["cellData"] != null:
+					if (gridDic[offsetTile]["floorData"] == null or gridDic[offsetTile]["cellData"] != null 
+						or gridDic[offsetTile]["floorData"].is_in_group("Asphalt")):
 						continue
 				if (offsetTile + currentTile) / 2 in edgeDic:
 					if edgeDic[(offsetTile + currentTile) / 2]["edgeData"] != null:
@@ -286,7 +289,7 @@ func MoveToPath(delta : float):
 	if Vector2(position.x, position.z).distance_to(currentPathList[nextPath]) <= pathfindRange:
 		nextPath += 1
 		movementDir = (currentPathList[nextPath] - Vector2(position.x, position.z)).normalized()
-		look_at(Vector3(currentPathList[nextPath].x, 0, currentPathList[nextPath].y))
+		look_at(Vector3(currentPathList[nextPath].x, 0.5, currentPathList[nextPath].y))
 	else:
 		position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
 
@@ -374,7 +377,7 @@ func QueueMoveToPath(delta : float):
 	if Vector2(position.x, position.z).distance_to(currentPathList[nextPath]) <= pathfindRange:
 		nextPath += 1
 		movementDir = (currentPathList[nextPath] - Vector2(position.x, position.z)).normalized()
-		look_at(Vector3(currentPathList[nextPath].x, 0, currentPathList[nextPath].y))
+		look_at(Vector3(currentPathList[nextPath].x, 0.5, currentPathList[nextPath].y))
 	else:
 		position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
 		
@@ -384,12 +387,12 @@ func WaitInQueue():
 		]
 	queueTargetPos = checkoutTarget
 	
-	var lookSpot : Vector3 = Vector3(queueTargetPos.x, 0, queueTargetPos.y)
+	var lookSpot : Vector3 = Vector3(queueTargetPos.x, 0.5, queueTargetPos.y)
 	if currentCheckout.queueSpotList.size() >= 1:
 		var nextQueuePos : Vector2 = currentCheckout.queueSpotList[
 			currentCheckout.queueSpotList.find(queueTargetPos) - 1
 		]
-		lookSpot = Vector3(nextQueuePos.x, 0, nextQueuePos.y)
+		lookSpot = Vector3(nextQueuePos.x, 0.5, nextQueuePos.y)
 		
 	look_at(lookSpot)
 	movementDir = (queueTargetPos - Vector2(position.x, position.z)).normalized()

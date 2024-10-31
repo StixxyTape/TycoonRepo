@@ -13,7 +13,7 @@ var rayCol
 #endregion
 
 #region General Building
-# 0 Means deleting, 1 means cell building, 2 means edge building, 3 means floor building
+# 0 Means deleting, 1 means cell building, 2 means edge building, 3 means floor building, 4 means land mode
 var buildMode : int = 0
 
 # For keeping track of rotation
@@ -50,6 +50,7 @@ var redCellCol : Color = Color(1, 0.5, 0.5, 1)
 #region Structures
 var wallPref : PackedScene = preload("res://Models/Building/Structure/WallTile/WallTile.gltf")
 var previewWallPref : PackedScene = preload("res://Models/Building/Structure/WallTile/PreviewWallTile.gltf")
+var wallHider : PackedScene = preload("res://VFX/WallHide/WallHider.tscn")
 
 var doubleDoorPref : PackedScene = preload("res://Models/Building/Structure/DoubleDoor/DoubleDoor.gltf")
 var longWallPref : PackedScene = preload("res://Models/Building/Structure/LongWall/LongWall.gltf")
@@ -128,9 +129,6 @@ func _ready() -> void:
 		floorEdges.append(newEdgeArray)
 		var newFloorArray : Array = []
 		floorFloors.append(newFloorArray)
-		
-	for floor in Global.gridSys.floorGridDics[0]:
-		floorFloors[0].append(Global.gridSys.floorGridDics[0][floor]["floorData"])
 
 func _process(delta):
 	currentHeight = currentFloor * Global.gridSys.wallHeight
@@ -141,14 +139,17 @@ func _process(delta):
 func EstablishStructureDic():
 	structureDic[str(basicShelfPref)] = {
 		"name" : "Double Shelf",
-		"cost" : 100
+		"cost" : 100,
+		"prefab" : basicShelfPref
 	}
 	structureDic[str(basicCheckoutPref)] = {
 		"name" : "Checkout",
-		"cost" : 200
+		"cost" : 200,
+		"prefab" : basicCheckoutPref
 	}
 
 func SwapBuildPref(prefab : PackedScene, type : int):
+	print("BITCH")
 	#type 1 is obj, 2 is edge, 3 is floor
 	if type == 1:
 		currentCellPref = prefab
@@ -208,7 +209,10 @@ func InputManager():
 
 func SwapBuildMode(mode : int):
 	buildMode = mode
-	#buildMode = wrapi(buildMode, 0, 4)
+	#if mode == 3:
+		#Global.floatingGridSys.ShowBuildGrid()
+	#else:
+		#Global.floatingGridSys.HideBuildGrid()
 	ResetHighlightedCells()
 	ResetPreview()
 	ResetDeletionObj()
@@ -250,11 +254,12 @@ func MouseRaycast():
 			intersection["position"].x, 
 			intersection["position"].z
 			)
-		if Global.mouseHover:
+		if Global.mouseHover or buildMode == 4:
 			ResetEverything()
 			return
 		if round(colPoint) not in Global.landSys.ownedCells:
-			if buildMode == 0 and objectsToDelete.size() == 0:
+			if (buildMode == 0 and objectsToDelete.size() == 0 and 
+			intersection["collider"].get_parent().get_parent() not in floorEdges[currentFloor]):
 				ResetEverything()
 				return
 		if buildMode == 0:
@@ -856,10 +861,35 @@ func EdgePreview(point : Vector2):
 							if (cellsToCheck[0] not in Global.landSys.ownedCells and 
 								cellsToCheck[1] not in Global.landSys.ownedCells):
 								notInOwnedCells = true
+								
+							if (cellsToCheck[0] in Global.gridSys.floorGridDics[currentFloor] and 
+								cellsToCheck[1] in Global.gridSys.floorGridDics[currentFloor]):
+								if (Global.gridSys.floorGridDics[currentFloor][cellsToCheck[0]]["floorData"] == null and 
+									Global.gridSys.floorGridDics[currentFloor][cellsToCheck[1]]["floorData"] == null):
+									notInOwnedCells = true
+							elif (cellsToCheck[0] in Global.gridSys.floorGridDics[currentFloor] and 
+								Global.gridSys.floorGridDics[currentFloor][cellsToCheck[0]]["floorData"] == null):
+								notInOwnedCells = true
+							elif (cellsToCheck[1] in Global.gridSys.floorGridDics[currentFloor] and 
+								Global.gridSys.floorGridDics[currentFloor][cellsToCheck[1]]["floorData"] == null):
+								notInOwnedCells = true
+								
 						elif round(edge.y) - edge.y != 0:
 							var cellsToCheck : Array = [Vector2(edge.x, edge.y + .5), Vector2(edge.x, edge.y - .5)]
 							if (cellsToCheck[0] not in Global.landSys.ownedCells and 
 								cellsToCheck[1] not in Global.landSys.ownedCells):
+								notInOwnedCells = true
+								
+							if (cellsToCheck[0] in Global.gridSys.floorGridDics[currentFloor] and 
+								cellsToCheck[1] in Global.gridSys.floorGridDics[currentFloor]):
+								if (Global.gridSys.floorGridDics[currentFloor][cellsToCheck[0]]["floorData"] == null and 
+									Global.gridSys.floorGridDics[currentFloor][cellsToCheck[1]]["floorData"] == null):
+									notInOwnedCells = true
+							elif (cellsToCheck[0] in Global.gridSys.floorGridDics[currentFloor] and 
+								Global.gridSys.floorGridDics[currentFloor][cellsToCheck[0]]["floorData"] == null):
+								notInOwnedCells = true
+							elif (cellsToCheck[1] in Global.gridSys.floorGridDics[currentFloor] and 
+								Global.gridSys.floorGridDics[currentFloor][cellsToCheck[1]]["floorData"] == null):
 								notInOwnedCells = true
 					
 					if notInOwnedCells:
@@ -868,7 +898,21 @@ func EdgePreview(point : Vector2):
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newWall = currentEdgePref.instantiate()
 					
-					add_child(newWall)
+					#if currentEdgePref == wallPref:
+					var wallHiderName : String 
+					if round(gridPos.x) - gridPos.x != 0:
+						wallHiderName = "X" + str(gridPos.x * 100)
+					elif round(gridPos.y) - gridPos.y != 0:
+						wallHiderName = "Y" + str(gridPos.y * 100)
+					if !get_node_or_null(str("Walls/", wallHiderName)):
+						var newWallHider : Node3D = wallHider.instantiate()
+						newWallHider.name = wallHiderName
+						print(newWallHider.name)
+						newWallHider.add_child(newWall)
+						$Walls.add_child(newWallHider)
+					else:
+						get_node(str("Walls/" + wallHiderName)).add_child(newWall)
+						
 					newWall.set_meta("edges", previewStructures[struct]["edges"])
 					newWall.set_meta("currentFloor", currentFloor)
 					
@@ -898,6 +942,35 @@ func EdgePreview(point : Vector2):
 						
 						if edge != storageEdge:
 							Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
+					
+					var edgesToCheck : Array = [
+						gridPos + Vector2(0.5, 0.5),
+						gridPos + Vector2(-0.5, 0.5),
+						gridPos + Vector2(0.5, -0.5),
+						gridPos + Vector2(-0.5, -0.5),
+					]
+					if round(gridPos.x) - gridPos.x != 0:
+						edgesToCheck.append(gridPos + Vector2(0, 1))
+						edgesToCheck.append(gridPos + Vector2(0, -1))
+						
+						var insideCount : int = 0
+						for edgeToCheck in edgesToCheck:
+							if Global.gridSys.floorEdgeDics[currentFloor][edgeToCheck]["edgeData"] != null:
+								insideCount += 1
+						if insideCount >= 2:
+							InsideCellCheck(gridPos)
+							
+					elif round(gridPos.y) - gridPos.y != 0:
+						edgesToCheck.append(gridPos + Vector2(1, 0))
+						edgesToCheck.append(gridPos + Vector2(-1, -0))
+						
+						var insideCount : int = 0
+						for edgeToCheck in edgesToCheck:
+							if Global.gridSys.floorEdgeDics[currentFloor][edgeToCheck]["edgeData"] != null:
+								insideCount += 1
+						if insideCount >= 2:
+							InsideCellCheck(gridPos)
+						
 
 		previewStructures.clear()
 		
@@ -1014,8 +1087,7 @@ func FloorPreview(point : Vector2):
 				if is_instance_valid(previewStructures[struct]["previewObj"]):
 					previewStructures[struct]["previewObj"].queue_free()
 					
-					if (Global.gridSys.floorGridDics[currentFloor][Vector2(struct.x, struct.z)]["floorData"] or
-						Vector2(struct.x, struct.z) not in Global.landSys.ownedCells):
+					if Vector2(struct.x, struct.z) not in Global.landSys.ownedCells:
 						continue
 						
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
@@ -1414,7 +1486,9 @@ func DeleteObjects():
 			
 			for edgeToDel in Global.gridSys.floorEdgeDics[currentFloor][edgePoint]["edges"]:
 				ResetDicEntry(edgeToDel)
+				InsideCellCheck(edgeToDel, true)
 			ResetDicEntry(edgePoint)
+			InsideCellCheck(edgePoint, true)
 			floorEdges[currentFloor].erase(objMesh.get_parent())
 			
 		else:
@@ -1540,6 +1614,84 @@ func HideFloors():
 				floorObj.visible = false
 				floorObj.get_child(0).get_child(0).get_child(0).disabled = true
 
+func InsideCellCheck(edge, deleting : bool = false):
+	var neighbours : Array = [
+		Vector2(0, 1),
+		Vector2(0, -1),
+		Vector2(1, 0),
+		Vector2(-1, 0)
+	]
+	
+	var startingCells : Array 
+	
+	if round(edge.x) - edge.x != 0:
+		startingCells.append(Vector2(edge.x + .5, edge.y))
+		startingCells.append(Vector2(edge.x - .5, edge.y))
+	elif round(edge.y) - edge.y != 0:
+		startingCells.append(Vector2(edge.x, edge.y + .5))
+		startingCells.append(Vector2(edge.x, edge.y - .5))
+	
+	
+	for startCell in startingCells:
+		if startCell not in Global.landSys.ownedCells:
+			continue
+		if deleting and !Global.gridSys.floorGridDics[currentFloor][startCell]["inside"]:
+			continue
+		if !deleting and Global.gridSys.floorGridDics[currentFloor][startCell]["inside"]:
+			continue
+			
+		var checkedCells : Array 
+		var cellsToCheck : Array
+		
+		checkedCells.append(startCell)
+		for neighbour in neighbours:
+			var newCell = startCell + neighbour
+			if (Global.gridSys.floorEdgeDics[currentFloor][(newCell + startCell) / 2]["edgeData"] != null):
+				continue
+			cellsToCheck.append(newCell)
+			
+		var outsidePlot : bool = false
+		var insidePlot : bool = false
+
+		
+		while true:
+			var tempCellsToCheck : Array
+			print(cellsToCheck)
+			if cellsToCheck.size() == 0:
+				insidePlot = true
+				break
+			for cell in cellsToCheck:
+				if cell in checkedCells:
+					continue
+				if cell not in Global.landSys.ownedCells:
+					if deleting:
+						continue
+					elif !deleting:
+						outsidePlot = true
+						break
+				checkedCells.append(cell)
+				for neighbour in neighbours:
+					var newCell = cell + neighbour
+					if Global.gridSys.floorEdgeDics[currentFloor][(newCell + cell) / 2]["edgeData"] != null:
+						continue
+					if newCell not in checkedCells:
+						tempCellsToCheck.append(newCell)
+				
+			if outsidePlot:
+				break
+				
+			cellsToCheck.clear()
+			cellsToCheck = tempCellsToCheck.duplicate()
+		
+		if deleting: # We only need to set inside cells to outside if deleting
+			for cell in checkedCells:
+				Global.gridSys.floorGridDics[currentFloor][cell]["inside"] = false
+		
+		if !deleting :# We only need to set outside cells to inside if building
+			if insidePlot:
+				for cell in checkedCells:
+					Global.gridSys.floorGridDics[currentFloor][cell]["inside"] = true
+				
 #func Undo():
 	#for dicEntry in undoList[undoList.size() - 1]:
 		#var newObj : Node3D

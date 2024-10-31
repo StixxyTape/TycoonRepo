@@ -34,7 +34,9 @@ func SpawnCustomers(amountToSpawn : int, spawnTimeVariance : float):
 		await $SpawnTimer.timeout
 		
 		var newCustomer = customerPref.instantiate()
-		newCustomer.position = Vector3(2, 0, 3)
+		newCustomer.position = Vector3(0, 0.5, 12)
+		if randi_range(0, 1) == 1:
+			newCustomer.position = Vector3(0, 0.5, 11)
 		Global.gridSys.DuplicateMaterial(newCustomer)
 		
 		if amountToSpawn == 1:

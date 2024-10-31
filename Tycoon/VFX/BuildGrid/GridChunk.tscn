@@ -3,7 +3,8 @@
 [ext_resource type="Texture2D" uid="uid://bvymm5pbwo88p" path="res://VFX/BuildGrid/BuildChunkThin.png" id="1_888ll"]
 
 [node name="GridChunk" type="Sprite3D" groups=["GridChunk", "GridVisual"]]
-transform = Transform3D(3.125, 0, 0, 0, -1.36598e-07, 1, 0, -3.125, -4.37114e-08, 0, 0, 0)
+transform = Transform3D(1.563, 0, 0, 0, -6.83209e-08, 1, 0, -1.563, -4.37114e-08, 0, 0, 0)
 double_sided = false
 texture_filter = 0
+render_priority = 1
 texture = ExtResource("1_888ll")

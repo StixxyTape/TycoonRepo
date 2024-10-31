@@ -1,7 +1,8 @@
-MeshInstance3D
 Node3D
-Sprite3D
+MeshInstance3D
 Decal
+MultiMeshInstance3D
+Sprite3D
 StaticBody3D
 CollisionShape3D
 Timer
@@ -11,4 +12,3 @@ Control
 HBoxContainer
 VBoxContainer
 NavigationRegion3D
-CharacterBody3D

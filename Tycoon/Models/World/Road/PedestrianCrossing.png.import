@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c1da0wn3y0p4j"
-path.bptc="res://.godot/imported/TestTexture.png-9fa3e9f5c1930b2998fab35c43f20e8f.bptc.ctex"
+uid="uid://dqvyyfgvl26dv"
+path.bptc="res://.godot/imported/PedestrianCrossing.png-ab53e36d38c9a4a49c6e0e7c0ee37c1e.bptc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Models/Building/Structure/FloorTile/TestTexture.png"
-dest_files=["res://.godot/imported/TestTexture.png-9fa3e9f5c1930b2998fab35c43f20e8f.bptc.ctex"]
+source_file="res://Models/World/Road/PedestrianCrossing.png"
+dest_files=["res://.godot/imported/PedestrianCrossing.png-ab53e36d38c9a4a49c6e0e7c0ee37c1e.bptc.ctex"]
 
 [params]
 

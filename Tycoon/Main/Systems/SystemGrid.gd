@@ -25,8 +25,9 @@ var maxFloor : int = 0
 var floorGridDics : Array = []
 var floorEdgeDics : Array = []
 
-#region DEBUG
+#region Cells
 @onready var floorPref : PackedScene = preload("res://Models/Building/Structure/FloorTile/FloorTile.gltf")
+@onready var grassText : CompressedTexture2D = preload("res://Models/Building/Structure/FloorTile/Textures/Grass.png")
 
 #endregion
 
@@ -42,7 +43,7 @@ func _ready():
 func EstablishGrid():
 	# We set the size slightly smaller to prevent conflicts
 	gridBody.get_child(0).get_shape().size = Vector3(gridSize.x * 4, .04, gridSize.y * 4)
-	gridBody.position = Vector3((gridSize.x / 2) - 0.5, 0, (gridSize.y / 2) - 0.5)
+	gridBody.position = Vector3((gridSize.x / 2) - 0.5, -.05, (gridSize.y / 2) - 0.5)
 	
 	for x in gridSize.x:
 		for y in gridSize.y:
@@ -51,22 +52,9 @@ func EstablishGrid():
 				"cellData" : null,
 				"cells" : [],
 				"storageEdge" : null,
-				"interactionSpot" : 0
+				"interactionSpot" : 0,
+				"inside" : false
 			}
-			
-			# Visualise Grid
-			var newFloor = floorPref.instantiate()
-			newFloor.get_child(0).get_child(0).set_collision_layer_value(1, false)
-			newFloor.get_child(0).get_child(0).set_collision_layer_value(2, true)
-			DuplicateMaterial(newFloor)
-			newFloor.position = Vector3(x, 0, y)
-			newFloor.add_to_group("Floor", true)
-			newFloor.add_to_group("Persist", true)
-			newFloor.set_meta("currentFloor", 0)
-			newFloor.set_meta("cells", Vector2(x, y))
-			gridDic[Vector2(x, y)]["floorData"] = newFloor
-			newFloor.scale = Vector3(1, 1, 1)
-			get_node("../BuildSystem").add_child(newFloor)
 			
 			if (((int(x) - 3) % 6 == 0 or (x-3) == 0) and
 				((int(y) -3) % 6 == 0 or (y-3) == 0)):
@@ -106,7 +94,8 @@ func EstablishGrid():
 					"cellData" : null,
 					"cells" : [],
 					"storageEdge" : null,
-					"interactionSpot" : 0
+					"interactionSpot" : 0,
+					"inside" : false
 				}
 			
 		floorGridDics.append(newGridDic)
@@ -128,7 +117,29 @@ func EstablishGrid():
 					}
 	
 		floorEdgeDics.append(newEdgeDic)
-		
+
+func EstablishGrass(cells):
+	for cell in cells:
+		if Vector2(cell.x, cell.y) in Global.landSys.ownedCells:
+			# Visualise Grid
+			var newFloor = floorPref.instantiate()
+			newFloor.get_child(0).get_child(0).set_collision_layer_value(1, false)
+			newFloor.get_child(0).get_child(0).set_collision_layer_value(2, true)
+			DuplicateMaterial(newFloor)
+			newFloor.position = Vector3(cell.x, -.01, cell.y)
+			newFloor.add_to_group("Floor", true)
+			newFloor.add_to_group("Persist", true)
+			newFloor.set_meta("currentFloor", 0)
+			newFloor.set_meta("cells", Vector2(cell.x, cell.y))
+			gridDic[Vector2(cell.x, cell.y)]["floorData"] = newFloor
+			newFloor.scale = Vector3(1, 1, 1)
+			get_node("../BuildSystem").add_child(newFloor)
+
+			GetMaterial(newFloor).albedo_texture = grassText
+				
+	for floor in floorGridDics[0]:
+		Global.buildSys.floorFloors[0].append(floorGridDics[0][floor]["floorData"])
+	
 func GlobalToGrid(pos : Vector2):
 	return round(pos)
 	

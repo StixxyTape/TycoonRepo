@@ -1,10 +1,10 @@
 [gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://bvw2dhurtqld1"]
 
-[ext_resource type="Texture2D" uid="uid://bxui0lfwnn3xm" path="res://Models/Building/Structure/WallTile/WallTestTexture2.png" id="1_wvnws"]
+[ext_resource type="Texture2D" uid="uid://cheapurrh20kl" path="res://Models/Debug/OrangeTexture.png" id="1_y304d"]
 
 [resource]
 resource_name = "WallMat"
 cull_mode = 2
-albedo_texture = ExtResource("1_wvnws")
+albedo_texture = ExtResource("1_y304d")
 roughness = 0.4
 texture_filter = 0

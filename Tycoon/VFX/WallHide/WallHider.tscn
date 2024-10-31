@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b0v77wkf0glic"]
+
+[ext_resource type="Script" path="res://VFX/WallHide/WallHider.gd" id="1_io04w"]
+
+[node name="WallHider" type="Node3D"]
+script = ExtResource("1_io04w")

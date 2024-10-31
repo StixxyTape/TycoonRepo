@@ -16,18 +16,65 @@ var ogTweenRot : Vector3
 var intersectionRIDs : Array 
 var transparentMatDic : Dictionary 
 
-var fuck
+var wallHideDir : Vector2
 
 func _input(event):
 	if event is InputEventMouseMotion:
 		camInput = event.relative
 
 func _physics_process(delta):
+	var parentRot : float = get_parent().rotation_degrees.y
+	var camDirection : Vector2
+	if parentRot < -90:
+		camDirection = Vector2(1, 1)
+	elif parentRot < 0:
+		camDirection =  Vector2(1, -1)
+	elif parentRot < 90:
+		camDirection = Vector2(-1, -1)
+	elif parentRot <= 180:
+		camDirection = Vector2(-1, 1)
+		
+	if camDirection != wallHideDir:
+		wallHideDir = camDirection
+		UpdateWallHide()
+	
 	if Global.camCanMove:
 		MovementManager(delta)
 	if Input.is_action_just_released("CameraRotate"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			
+
+func UpdateWallHide():
+	for wall in Global.buildSys.get_node("Walls").get_children():
+		if round(wall.position.x) - wall.position.x != 0:
+			var checkPos : Vector2 = Vector2(wall.position.x + (wallHideDir.x/2), wall.position.z)
+			if (checkPos not in Global.landSys.ownedCells or 
+			checkPos not in Global.gridSys.floorGridDics[Global.buildSys.currentFloor]):
+				wall.visible = true
+				continue
+			if (checkPos in Global.gridSys.floorGridDics[Global.buildSys.currentFloor]):
+				if Global.gridSys.floorGridDics[Global.buildSys.currentFloor][checkPos]["inside"]:
+					wall.visible = false
+					continue
+				else:
+					print(wallHideDir)
+					wall.visible = true
+					continue
+					
+		elif round(wall.position.z) - wall.position.z != 0:
+			var checkPos : Vector2 = Vector2(wall.position.x, wall.position.z + (wallHideDir.y/2))
+			if (checkPos not in Global.landSys.ownedCells or 
+			checkPos not in Global.gridSys.floorGridDics[Global.buildSys.currentFloor]):
+				wall.visible = true
+				continue
+			if (checkPos in Global.gridSys.floorGridDics[Global.buildSys.currentFloor]):
+				if Global.gridSys.floorGridDics[Global.buildSys.currentFloor][checkPos]["inside"]:
+					wall.visible = false
+					continue
+				else:
+					wall.visible = true
+					continue
+		
+
 func MovementManager(delta):
 	if Input.is_action_pressed("CameraRotate"):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -43,14 +90,15 @@ func MovementManager(delta):
 		speed = 15
 	else:
 		speed = 6
-	
 		
 	var input_dir = Input.get_vector("Left", "Right", "Forward", "Backward")
 	var direction = (get_parent().transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	if direction:
 		direction.y = -input_dir.y * rotation_degrees.x / 90
 		get_parent().global_position += direction * speed * delta
-
+	
+	camInput = Vector2.ZERO
+	
 func TweenCamera(object : Node3D, distance : float, time : float):	
 	for child in get_children():
 		if child.is_in_group("Temp"):

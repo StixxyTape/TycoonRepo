@@ -165,6 +165,18 @@ func OpenBuildMenu():
 	floorButton.pressed.connect(OpenBuildMenu)
 	ConnectMouseHover(floorButton)
 	
+	var landButton = Button.new()
+	landButton.add_to_group(resetGroup)
+	landButton.text = "Buy Land"
+	landButton.focus_mode = Control.FOCUS_NONE
+	$BuildMenus/BuildMenu.add_child(landButton)
+	
+	landButton.pressed.connect(Global.buildSys.SwapBuildMode.bind(
+		4
+	))
+	landButton.pressed.connect(OpenBuildMenu)
+	ConnectMouseHover(landButton)
+	
 	var deleteButton = Button.new()
 	deleteButton.add_to_group(resetGroup)
 	deleteButton.text = "Delete"
@@ -176,6 +188,7 @@ func OpenBuildMenu():
 	))
 	deleteButton.pressed.connect(OpenBuildMenu)
 	ConnectMouseHover(deleteButton)
+	
 
 func OpenBuildShopMenu(menuMode : int):
 	match menuMode:
@@ -190,9 +203,9 @@ func OpenBuildObjects():
 		objButton.text = str("Place ", structureDic[obj]["name"], " - $", structureDic[obj]["cost"])
 		objButton.focus_mode = Control.FOCUS_NONE
 		$BuildMenus/BuildObjectsMenu.add_child(objButton)
-		
+
 		objButton.pressed.connect(Global.buildSys.SwapBuildPref.bind(
-			obj, 1
+			structureDic[obj]["prefab"], 1
 		))
 		ConnectMouseHover(objButton)
 

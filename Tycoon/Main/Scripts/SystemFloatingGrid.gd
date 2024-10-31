@@ -13,13 +13,15 @@ func GridUpdate():
 		return
 		
 	if Global.currentMode == 1:
-		ShowBuildGrid()
+		pass
+		#ShowBuildGrid()
 	else:
+		pass
 		HideBuildGrid()
 	
 func UpdateBuildGrid(newPos : Vector2):
 	var newGridChunk : Sprite3D = gridChunk.instantiate()
-	newGridChunk.position = Vector3(newPos.x, .05, newPos.y)
+	newGridChunk.position = Vector3(newPos.x, .01, newPos.y)
 	newGridChunk.visible = false
 	$GridChunks.add_child(newGridChunk)
 	

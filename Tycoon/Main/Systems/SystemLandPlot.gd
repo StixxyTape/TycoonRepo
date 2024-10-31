@@ -5,12 +5,42 @@ var landPlotPref : PackedScene = preload("res://LandPlots/LandPlot.tscn")
 var availableLandPlots : PackedVector2Array = []
 
 var ownedCells : PackedVector2Array = []
+var ownedPlots : PackedVector2Array = []
 
 var startingPlots : Array = []
 var startingPlotPositions : PackedVector2Array = [
-	Vector2(2.5, 8.5),
-	Vector2(2.5, 14.5)
+	Vector2(8.5, 8.5),
+	Vector2(8.5, 14.5),
+	Vector2(14.5, 8.5),
+	Vector2(14.5, 14.5)
 ]
+
+#var sideWalkTiles : PackedVector2Array = [
+	#Vector2(0, 6), Vector2(0, 7), Vector2(0, 8),
+	#Vector2(0, 15), Vector2(0, 16), Vector2(0, 17),
+	#Vector2(1, 6), Vector2(1, 17), Vector2(2, 6), Vector2(2, 17),
+	#Vector2(3, 6), Vector2(3, 17), Vector2(4, 6), Vector2(4, 17),
+	#Vector2(5, 6), Vector2(5, 7), Vector2(5, 8), Vector2(5, 9),
+	#Vector2(5, 10), Vector2(5, 11), Vector2(5, 12), Vector2(5, 13),
+	#Vector2(5, 14), Vector2(5, 15), Vector2(5, 16), Vector2(5, 17)
+#]
+#
+#var asphaltTiles : PackedVector2Array = [
+	#Vector2(0, 9), Vector2(0, 10), Vector2(0, 11), Vector2(0, 12), 
+	#Vector2(0, 13), Vector2(0, 14),
+	#Vector2(1, 7), Vector2(1, 8), Vector2(1, 9), Vector2(1, 10),
+	#Vector2(1, 11), Vector2(1, 12), Vector2(1, 13), Vector2(1, 14),
+	#Vector2(1, 15), Vector2(1, 16), Vector2(1, 17),
+	#Vector2(2, 7), Vector2(2, 8), Vector2(2, 9), Vector2(2, 10),
+	#Vector2(2, 11), Vector2(2, 12), Vector2(2, 13), Vector2(2, 14),
+	#Vector2(2, 15), Vector2(2, 16), Vector2(2, 17), 
+	#Vector2(3, 7), Vector2(3, 8), Vector2(3, 9), Vector2(3, 10),
+	#Vector2(3, 11), Vector2(3, 12), Vector2(3, 13), Vector2(3, 14),
+	#Vector2(3, 15), Vector2(3, 16), Vector2(3, 17), 
+	#Vector2(4, 7), Vector2(4, 8), Vector2(4, 9), Vector2(4, 10),
+	#Vector2(4, 11), Vector2(4, 12), Vector2(4, 13), Vector2(4, 14),
+	#Vector2(4, 15), Vector2(4, 16), Vector2(4, 17), 
+#]
 
 var cam : Camera3D
 
@@ -28,7 +58,7 @@ func _ready() -> void:
 	cam = Global.camController.get_node("Camera3D")
 	
 func _process(delta: float) -> void:
-	if Global.currentMode == 3: 
+	if Global.currentMode == 1 and Global.buildSys.buildMode == 4: 
 		MouseRaycast(delta)
 
 func MouseRaycast(delta : float):
@@ -98,10 +128,13 @@ func ResetSelectedPlot():
 		selectedPlot = null
 		
 func SwitchToLandMode():
-	if Global.currentMode == 3:
+	if Global.currentMode == 1:
+		var neighbours = [Vector2(0, 6), Vector2(0, -6), Vector2(6,0), Vector2(-6, 0)]
 		for child in get_children():
-			child.visible = true
-			child.get_node("StaticBody3D/CollisionShape3D").disabled = false
+			for neighbour in neighbours:
+				if Vector2(child.position.x, child.position.z) + neighbour in ownedPlots:
+					child.visible = true
+					child.get_node("StaticBody3D/CollisionShape3D").disabled = false
 	else:
 		for child in get_children():
 			child.visible = false
@@ -113,7 +146,7 @@ func SwitchToLandMode():
 func EstablishPlots():
 	for plot in availableLandPlots:
 		var newPlot = landPlotPref.instantiate()
-		newPlot.global_position = Vector3(plot.x + .5, 0, plot.y + .5)
+		newPlot.global_position = Vector3(plot.x + .5, .01, plot.y + .5)
 		add_child(newPlot)
 		
 		newPlot.visible = false
@@ -127,6 +160,7 @@ func EstablishPlots():
 	for plot in startingPlots:
 		BuyPlot(plot, true)
 	
+	
 func BuyPlot(plot, startingPlot : bool = false):
 	if !startingPlot:
 		if Global.playerMoney < Global.landPrice:
@@ -136,15 +170,21 @@ func BuyPlot(plot, startingPlot : bool = false):
 		Global.playerMoney -= Global.landPrice
 		Global.landPrice += 750
 		Global.uiSys.MoneyUpdate()
-			
+	
+	var grassCells : Array = []
 	for x in (plot.cellExtents[1].x - plot.cellExtents[0].x) + 1:
 		for y in (plot.cellExtents[1].y - plot.cellExtents[0].y) + 1:
 			ownedCells.append(Vector2(plot.cellExtents[0].x + x, plot.cellExtents[0].y + y))
+			grassCells.append(Vector2(plot.cellExtents[0].x + x, plot.cellExtents[0].y + y))
+	ownedPlots.append(Vector2(plot.position.x, plot.position.z))
+	Global.gridSys.EstablishGrass(grassCells)
 	
 	Global.floatingGridSys.UpdateBuildGrid(Vector2(plot.position.x, plot.position.z))
+	Global.floatingGridSys.GridUpdate()
 	
 	plot.queue_free()
 	
 	ResetHighlightedPlot()
 	ResetSelectedPlot()
+	SwitchToLandMode()
 	
