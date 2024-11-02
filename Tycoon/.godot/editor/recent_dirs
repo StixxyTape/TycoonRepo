@@ -1,3 +1,6 @@
+res://Models/Building/Facilities/Checkout
+res://Models/Building/Shelving/BasicShelf
+res://VFX/Grass
 res://VFX/WallHide
 res://Models/World/Road
 res://Models/World/Ground
@@ -16,4 +19,3 @@ res://Models/Characters/Bodies/Male
 res://Models/Building/Structure/WallTile
 res://Main/Scripts
 res://Models/Building/Structure
-res://Main

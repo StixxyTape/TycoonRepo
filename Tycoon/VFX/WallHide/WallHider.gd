@@ -3,7 +3,7 @@ extends Node3D
 var activeWall : Node3D
 
 func _process(delta: float) -> void:
-	if get_children().size() <= 0:
+	if get_children().size() <= 0 or Global.loading:
 		return
 	if !is_instance_valid(activeWall) or activeWall == null:
 		activeWall = get_child(0)

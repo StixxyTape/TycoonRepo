@@ -14,7 +14,7 @@ func GridUpdate():
 		
 	if Global.currentMode == 1:
 		pass
-		#ShowBuildGrid()
+		ShowBuildGrid()
 	else:
 		pass
 		HideBuildGrid()

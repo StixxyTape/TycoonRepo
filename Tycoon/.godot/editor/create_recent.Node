@@ -1,8 +1,8 @@
 Node3D
+Sprite3D
 MeshInstance3D
 Decal
 MultiMeshInstance3D
-Sprite3D
 StaticBody3D
 CollisionShape3D
 Timer

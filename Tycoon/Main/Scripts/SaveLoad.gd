@@ -3,6 +3,7 @@ extends Node
 var savePath : String = "user://gameData.save"
 
 func LoadGame():
+	Global.loading = true
 	var saveNodes = get_tree().get_nodes_in_group("Persist")
 	for node in saveNodes:
 		for floor in Global.gridSys.maxFloor + 1:
@@ -74,7 +75,8 @@ func LoadGame():
 							"cellData" : null,
 							"cells" : convertedCells,
 							"storageEdge" : newStorageEdge,
-							"interactionSpot" : int(dicData["interactionSpot"])
+							"interactionSpot" : int(dicData["interactionSpot"]),
+							"inside" : dicData["inside"]
 						}
 						#for x in Global.gridSys.floorGridDics[currentFloor][dicEntry]:
 							#print(Global.gridSys.floorGridDics[currentFloor][dicEntry][x])
@@ -94,7 +96,8 @@ func LoadGame():
 							"cellData" : null,
 							"edges" : convertedEdges,
 							"interactionEdges" : convertedInteractionEdges,
-							"interactionEdge" : int(dicData["interactionEdge"])
+							"interactionEdge" : int(dicData["interactionEdge"]),
+							"door" : dicData["door"]
 						}
 			
 			elif loadingBuildData:
@@ -178,6 +181,7 @@ func LoadGame():
 					Global.floatingGridSys.GridUpdate()
 						
 	Global.UpdateUI()
+	Global.loading = false
 	
 func SaveGame():
 	var saveFile = FileAccess.open(savePath, FileAccess.WRITE)

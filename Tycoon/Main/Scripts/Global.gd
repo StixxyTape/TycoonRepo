@@ -60,6 +60,8 @@ var actionPhaseTimeScale : float = 1
 
 #endregion
 
+var loading : bool = false
+
 func _process(delta: float) -> void:
 	GlobalInputManager()
 	
@@ -83,7 +85,7 @@ func ChangePhase(toActionPhase : bool = true):
 		preparationPhase = false
 		currentMode = 0
 		uiSys.ResetUI()
-		customerSys.BeginCustomerSpawn(10, 2, .5)
+		customerSys.BeginCustomerSpawn(2, 2, .5)
 		uiSys.EstablishTimeControls()
 	else:
 		preparationPhase = true

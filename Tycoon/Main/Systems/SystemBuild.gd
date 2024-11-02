@@ -50,7 +50,6 @@ var redCellCol : Color = Color(1, 0.5, 0.5, 1)
 #region Structures
 var wallPref : PackedScene = preload("res://Models/Building/Structure/WallTile/WallTile.gltf")
 var previewWallPref : PackedScene = preload("res://Models/Building/Structure/WallTile/PreviewWallTile.gltf")
-var wallHider : PackedScene = preload("res://VFX/WallHide/WallHider.tscn")
 
 var doubleDoorPref : PackedScene = preload("res://Models/Building/Structure/DoubleDoor/DoubleDoor.gltf")
 var longWallPref : PackedScene = preload("res://Models/Building/Structure/LongWall/LongWall.gltf")
@@ -111,9 +110,11 @@ var floorFloors : Array
 
 # For Shopping
 var structureDic : Dictionary 
+var edgeStructureDic : Dictionary
 
 func _ready() -> void:
 	EstablishStructureDic()
+	EstablishEdgeDic()
 	
 	Global.switchSystemSignal.connect(ResetEverything)
 	
@@ -146,6 +147,18 @@ func EstablishStructureDic():
 		"name" : "Checkout",
 		"cost" : 200,
 		"prefab" : basicCheckoutPref
+	}
+	
+func EstablishEdgeDic():
+	edgeStructureDic[str(wallPref)] = {
+		"name" : "Wall",
+		"cost" : 20,
+		"prefab" : wallPref
+	}
+	edgeStructureDic[str(doubleDoorPref)] = {
+		"name" : "Double Doors",
+		"cost" : 150,
+		"prefab" : doubleDoorPref
 	}
 
 func SwapBuildPref(prefab : PackedScene, type : int):
@@ -894,31 +907,26 @@ func EdgePreview(point : Vector2):
 					
 					if notInOwnedCells:
 						continue
-						
+					
+					var price : int = edgeStructureDic[str(currentEdgePref)]["cost"]
+					print(price)
+					if Global.playerMoney < price:
+						continue
+					else:
+						Global.playerMoney -= price
+					Global.UpdateUI()
+					
 					var gridPos : Vector2 = Vector2(struct.x, struct.z)
 					var newWall = currentEdgePref.instantiate()
 					
 					#if currentEdgePref == wallPref:
-					var wallHiderName : String 
-					if round(gridPos.x) - gridPos.x != 0:
-						wallHiderName = "X" + str(gridPos.x * 100)
-					elif round(gridPos.y) - gridPos.y != 0:
-						wallHiderName = "Y" + str(gridPos.y * 100)
-					if !get_node_or_null(str("Walls/", wallHiderName)):
-						var newWallHider : Node3D = wallHider.instantiate()
-						newWallHider.name = wallHiderName
-						print(newWallHider.name)
-						newWallHider.add_child(newWall)
-						$Walls.add_child(newWallHider)
-					else:
-						get_node(str("Walls/" + wallHiderName)).add_child(newWall)
 						
 					newWall.set_meta("edges", previewStructures[struct]["edges"])
 					newWall.set_meta("currentFloor", currentFloor)
+					newWall.set_meta("dicKey", str(currentEdgePref))
 					
 					floorEdges[currentFloor].append(newWall)
 					newWall.rotation_degrees = previewStructures[struct]["rotation"]
-					newWall.scale = ZFightFix(gridPos, Global.gridSys.floorEdgeDics[currentFloor])
 					newWall.position = struct
 					newWall.add_to_group("Edge", true)
 					newWall.add_to_group("Persist", true)
@@ -929,6 +937,18 @@ func EdgePreview(point : Vector2):
 						storageEdge = Global.gridSys.GlobalToEdge(gridPos, false)
 					else:
 						storageEdge = Global.gridSys.GlobalToEdge(gridPos, true)
+					
+					newWall.scale = ZFightFix(storageEdge, Global.gridSys.floorEdgeDics[currentFloor])
+					if currentEdgePref == doubleDoorPref:
+						newWall.scale.y = .998
+						
+					var wallHiderName : String 
+					if round(storageEdge.x) - storageEdge.x != 0:
+						wallHiderName = "X" + str(storageEdge.x * 100)
+					elif round(storageEdge.y) - storageEdge.y != 0:
+						wallHiderName = "Y" + str(storageEdge.y * 100)
+						
+					get_node(str("Walls/" + wallHiderName)).add_child(newWall)
 					
 					for edge in previewStructures[struct]["edges"]:
 						if Global.gridSys.floorEdgeDics[currentFloor][edge]["edgeData"]:
@@ -942,34 +962,49 @@ func EdgePreview(point : Vector2):
 						
 						if edge != storageEdge:
 							Global.gridSys.floorEdgeDics[currentFloor][storageEdge]["edges"].append(edge)
+						
+						if currentEdgePref == doubleDoorPref:
+							Global.gridSys.floorEdgeDics[currentFloor][edge]["door"] = true
+						else:
+							Global.gridSys.floorEdgeDics[currentFloor][edge]["door"] = false
+								
+					var edgesToCheck : Array = []
 					
-					var edgesToCheck : Array = [
-						gridPos + Vector2(0.5, 0.5),
-						gridPos + Vector2(-0.5, 0.5),
-						gridPos + Vector2(0.5, -0.5),
-						gridPos + Vector2(-0.5, -0.5),
-					]
-					if round(gridPos.x) - gridPos.x != 0:
-						edgesToCheck.append(gridPos + Vector2(0, 1))
-						edgesToCheck.append(gridPos + Vector2(0, -1))
+					if round(storageEdge.x) - storageEdge.x != 0:
+						for edge in previewStructures[struct]["edges"]:
+							edgesToCheck.append(edge + Vector2(0.5, 0.5))
+							edgesToCheck.append(edge + Vector2(-0.5, 0.5))
+							edgesToCheck.append(edge + Vector2(0.5, -0.5))
+							edgesToCheck.append(edge + Vector2(-0.5, -0.5))
+							edgesToCheck.append(edge + Vector2(0, 1))
+							edgesToCheck.append(edge + Vector2(0, -1))
 						
 						var insideCount : int = 0
 						for edgeToCheck in edgesToCheck:
+							if edgeToCheck not in Global.gridSys.floorEdgeDics[currentFloor]:
+								continue
 							if Global.gridSys.floorEdgeDics[currentFloor][edgeToCheck]["edgeData"] != null:
 								insideCount += 1
 						if insideCount >= 2:
-							InsideCellCheck(gridPos)
+							InsideCellCheck(storageEdge)
 							
-					elif round(gridPos.y) - gridPos.y != 0:
-						edgesToCheck.append(gridPos + Vector2(1, 0))
-						edgesToCheck.append(gridPos + Vector2(-1, -0))
+					elif round(storageEdge.y) - storageEdge.y != 0:
+						for edge in previewStructures[struct]["edges"]:
+							edgesToCheck.append(edge + Vector2(0.5, 0.5))
+							edgesToCheck.append(edge + Vector2(-0.5, 0.5))
+							edgesToCheck.append(edge + Vector2(0.5, -0.5))
+							edgesToCheck.append(edge + Vector2(-0.5, -0.5))
+							edgesToCheck.append(edge + Vector2(1, 0))
+							edgesToCheck.append(edge + Vector2(-1, -0))
 						
 						var insideCount : int = 0
 						for edgeToCheck in edgesToCheck:
+							if edgeToCheck not in Global.gridSys.floorEdgeDics[currentFloor]:
+								continue
 							if Global.gridSys.floorEdgeDics[currentFloor][edgeToCheck]["edgeData"] != null:
 								insideCount += 1
 						if insideCount >= 2:
-							InsideCellCheck(gridPos)
+							InsideCellCheck(storageEdge)
 						
 
 		previewStructures.clear()
@@ -1478,6 +1513,10 @@ func DeleteObjects():
 			floorFloors[currentFloor].erase(objMesh.get_parent())
 			
 		elif objMesh.get_parent().is_in_group("Edge"):
+			var priceRefund : int = edgeStructureDic[objMesh.get_parent().get_meta("dicKey")]["cost"] * .8
+			Global.playerMoney += priceRefund
+			Global.UpdateUI()
+			
 			var edgePoint : Vector2 
 			edgePoint = Global.gridSys.GlobalToEdge(Vector2(
 				objMesh.get_parent().position.x, 
@@ -1540,6 +1579,8 @@ func ResetDicEntry(dicKey : Vector2):
 		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["interactionEdge"] -= 1
 		if Global.gridSys.floorEdgeDics[currentFloor][dicKey]["interactionEdge"] < 0:
 			Global.gridSys.floorEdgeDics[currentFloor][dicKey]["interactionEdge"] = 0
+		Global.gridSys.floorEdgeDics[currentFloor][dicKey]["door"] = false
+		
 	else:
 		Global.gridSys.floorGridDics[currentFloor][dicKey]["cellData"] = null
 		Global.gridSys.floorGridDics[currentFloor][dicKey]["cells"].clear()
@@ -1670,6 +1711,7 @@ func InsideCellCheck(edge, deleting : bool = false):
 						outsidePlot = true
 						break
 				checkedCells.append(cell)
+				#Global.gridSys.GetMaterial(Global.gridSys.floorGridDics[currentFloor][cell]["floorData"]).albedo_color = redCellCol
 				for neighbour in neighbours:
 					var newCell = cell + neighbour
 					if Global.gridSys.floorEdgeDics[currentFloor][(newCell + cell) / 2]["edgeData"] != null:

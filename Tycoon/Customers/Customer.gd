@@ -30,6 +30,13 @@ var interactionSpot : Node3D
 var lookingForShelf : bool = false
 var lookingForCheckout : bool = false
 
+var exitSpot : Vector2 
+var nearExitSpot : Vector2
+
+var movingNearEntrance : bool = false
+var movingNearExit : bool = false
+var movingToExit : bool = false
+
 #endregion
 
 #region Shopping
@@ -51,7 +58,12 @@ func _ready() -> void:
 	pathfindRange = (basePathfindRange * Global.actionPhaseTimeScale) # x1.25 to prevent customers overshooting
 	
 	AssignShoppingList()
-	ChooseShelf()
+	
+	movementDir = (nearExitSpot - Vector2(position.x, position.z)).normalized()
+	look_at(Vector3(nearExitSpot.x, 0.5, nearExitSpot.y))
+	movingNearEntrance = true 
+	
+	#ChooseShelf()
 
 func UpdateTimeScale():
 	movementSpeed = baseMovementSpeed * Global.actionPhaseTimeScale
@@ -59,6 +71,13 @@ func UpdateTimeScale():
 	pathfindRange = basePathfindRange * Global.actionPhaseTimeScale
 	
 func _process(delta: float) -> void:
+	if movingNearEntrance:
+		MoveToEntrance(delta)
+		return
+	elif movingToExit:
+		MoveToExit(delta)
+		return
+		
 	if movingAlongPath:
 		MoveToPath(delta)
 	elif movingAlongQueuePath:
@@ -195,7 +214,8 @@ func PathFind(targetPos : Vector2):
 						or gridDic[offsetTile]["floorData"].is_in_group("Asphalt")):
 						continue
 				if (offsetTile + currentTile) / 2 in edgeDic:
-					if edgeDic[(offsetTile + currentTile) / 2]["edgeData"] != null:
+					if (edgeDic[(offsetTile + currentTile) / 2]["edgeData"] != null 
+					and edgeDic[(offsetTile + currentTile) / 2]["door"] == false):
 						continue
 				var newDist = sqrt(
 					(targetPos.x - offsetTile.x)**2 + (targetPos.y - offsetTile.y)**2)
@@ -276,6 +296,21 @@ func PathFind(targetPos : Vector2):
 		movingAlongPath = true
 	
 	currentPathList = pathList
+
+func MoveToEntrance(delta : float):
+	if Vector2(position.x, position.z).distance_to(nearExitSpot) <= pathfindRange:
+		movingNearEntrance = false
+		ChooseShelf()
+		return
+		
+	position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
+	
+func MoveToExit(delta : float):
+	if Vector2(position.x, position.z).distance_to(exitSpot) <= pathfindRange:
+		Global.customerSys.MoveToPrepPhaseCheck()
+		queue_free()
+		
+	position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
 	
 func MoveToPath(delta : float):
 	if (nextPath == currentPathList.size()
@@ -284,6 +319,12 @@ func MoveToPath(delta : float):
 		if movingToShelf:
 			rotation_degrees.y = -currentShelf.rotation_degrees.y + 90
 			AddToBasket()
+		elif movingNearExit:
+			movingNearExit = false
+			movingToExit = true
+			movementDir = (exitSpot - Vector2(position.x, position.z)).normalized()
+			look_at(Vector3(exitSpot.x, 0.5, exitSpot.y))
+			
 		movingToShelf = false
 		return
 	if Vector2(position.x, position.z).distance_to(currentPathList[nextPath]) <= pathfindRange:
@@ -419,5 +460,6 @@ func Checkout():
 		await currentCheckout.scanned
 	
 	currentCheckout.MoveQueue()
-	Global.customerSys.MoveToPrepPhaseCheck()
-	queue_free()
+	
+	movingNearExit = true
+	PathFind(nearExitSpot)

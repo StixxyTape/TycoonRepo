@@ -28,6 +28,8 @@ var floorEdgeDics : Array = []
 #region Cells
 @onready var floorPref : PackedScene = preload("res://Models/Building/Structure/FloorTile/FloorTile.gltf")
 @onready var grassText : CompressedTexture2D = preload("res://Models/Building/Structure/FloorTile/Textures/Grass.png")
+@onready var grassEffect : PackedScene = preload("res://VFX/Grass/GrassEffect.tscn")
+@onready var wallHider : PackedScene = preload("res://VFX/WallHide/WallHider.tscn")
 
 #endregion
 
@@ -45,6 +47,22 @@ func EstablishGrid():
 	gridBody.get_child(0).get_shape().size = Vector3(gridSize.x * 4, .04, gridSize.y * 4)
 	gridBody.position = Vector3((gridSize.x / 2) - 0.5, -.05, (gridSize.y / 2) - 0.5)
 	
+	for x in gridSize.x + 1:
+		x -= .5
+		var wallHiderName : String = "X" + str(x * 100)
+		var newWallHider : Node3D = wallHider.instantiate()
+		newWallHider.name = wallHiderName
+		print(newWallHider.name)
+		Global.buildSys.get_node("Walls").add_child(newWallHider)
+	
+	for y in gridSize.y + 1:
+		y -= .5
+		var wallHiderName : String = "Y" + str(y * 100)
+		var newWallHider : Node3D = wallHider.instantiate()
+		newWallHider.name = wallHiderName
+		print(newWallHider.name)
+		Global.buildSys.get_node("Walls").add_child(newWallHider)
+			
 	for x in gridSize.x:
 		for y in gridSize.y:
 			gridDic[Vector2(x, y)] = {
@@ -74,7 +92,8 @@ func EstablishGrid():
 					"cellData" : null,
 					"edges" : [],
 					"interactionEdges" : [],
-					"interactionEdge" : 0
+					"interactionEdge" : 0,
+					"door" : false
 				}
 	floorEdgeDics.append(edgeDic)
 	
@@ -113,7 +132,8 @@ func EstablishGrid():
 						"cellData" : null,
 						"edges" : [],
 						"interactionEdges" : [],
-						"interactionEdge" : 0
+						"interactionEdge" : 0,
+						"door" : false
 					}
 	
 		floorEdgeDics.append(newEdgeDic)
@@ -136,6 +156,9 @@ func EstablishGrass(cells):
 			get_node("../BuildSystem").add_child(newFloor)
 
 			GetMaterial(newFloor).albedo_texture = grassText
+		
+			var newGrass = grassEffect.instantiate()
+			newFloor.add_child(newGrass)
 				
 	for floor in floorGridDics[0]:
 		Global.buildSys.floorFloors[0].append(floorGridDics[0][floor]["floorData"])

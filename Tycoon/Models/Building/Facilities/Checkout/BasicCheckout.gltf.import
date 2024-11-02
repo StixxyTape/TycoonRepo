@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://mvyok2i062mu"
-path="res://.godot/imported/BasicCheckout.gltf-29c397f61e241997b767d309f5faea05.scn"
+path="res://.godot/imported/BasicCheckout.gltf-bea95162a08f79e305ca8468e8f6ac02.scn"
 
 [deps]
 
-source_file="res://Models/Building/Facilities/BasicCheckout.gltf"
-dest_files=["res://.godot/imported/BasicCheckout.gltf-29c397f61e241997b767d309f5faea05.scn"]
+source_file="res://Models/Building/Facilities/Checkout/BasicCheckout.gltf"
+dest_files=["res://.godot/imported/BasicCheckout.gltf-bea95162a08f79e305ca8468e8f6ac02.scn"]
 
 [params]
 
@@ -31,6 +31,13 @@ animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
 import_script/path=""
-_subresources={}
+_subresources={
+"materials": {
+"CheckoutMat": {
+"use_external/enabled": true,
+"use_external/path": "res://Models/Building/Facilities/Checkout/CheckoutMat.tres"
+}
+}
+}
 gltf/naming_version=1
 gltf/embedded_image_handling=1

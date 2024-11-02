@@ -151,6 +151,7 @@ func OpenBuildMenu():
 		2
 	))
 	edgeButton.pressed.connect(OpenBuildMenu)
+	edgeButton.pressed.connect(OpenBuildShopMenu.bind(2))
 	ConnectMouseHover(edgeButton)
 	
 	var floorButton = Button.new()
@@ -194,6 +195,8 @@ func OpenBuildShopMenu(menuMode : int):
 	match menuMode:
 		1:
 			OpenBuildObjects()
+		2:
+			OpenEdgeObjects()
 	
 func OpenBuildObjects():
 	var structureDic = Global.buildSys.structureDic
@@ -209,6 +212,21 @@ func OpenBuildObjects():
 		))
 		ConnectMouseHover(objButton)
 
+func OpenEdgeObjects():
+	var edgeStructureDic = Global.buildSys.edgeStructureDic
+	print(edgeStructureDic)
+	for obj in edgeStructureDic:
+		var objButton = Button.new()
+		objButton.add_to_group(resetGroup)
+		objButton.text = str("Place ", edgeStructureDic[obj]["name"], " - $", edgeStructureDic[obj]["cost"])
+		objButton.focus_mode = Control.FOCUS_NONE
+		$BuildMenus/BuildObjectsMenu.add_child(objButton)
+
+		objButton.pressed.connect(Global.buildSys.SwapBuildPref.bind(
+			edgeStructureDic[obj]["prefab"], 2
+		))
+		ConnectMouseHover(objButton)
+		
 func OpenStockMenu(shelf : Node3D):
 	ResetUI()
 		

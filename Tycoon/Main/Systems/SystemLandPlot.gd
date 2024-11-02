@@ -9,10 +9,10 @@ var ownedPlots : PackedVector2Array = []
 
 var startingPlots : Array = []
 var startingPlotPositions : PackedVector2Array = [
+	Vector2(2.5, 8.5),
+	Vector2(2.5, 14.5),
 	Vector2(8.5, 8.5),
-	Vector2(8.5, 14.5),
-	Vector2(14.5, 8.5),
-	Vector2(14.5, 14.5)
+	Vector2(8.5, 14.5)
 ]
 
 #var sideWalkTiles : PackedVector2Array = [

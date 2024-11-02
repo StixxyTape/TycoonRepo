@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://2ke1nwnm0dnt"
+uid="uid://cjj1w3mcuqncl"
 path="res://.godot/imported/BasicShelf.gltf-9ea935408454fdbefc5fe5f0bdc8df56.scn"
 
 [deps]
@@ -31,6 +31,13 @@ animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
 import_script/path=""
-_subresources={}
+_subresources={
+"materials": {
+"BasicShelfMat": {
+"use_external/enabled": true,
+"use_external/path": "res://Models/Building/Shelving/BasicShelf/BasicShelfMat.tres"
+}
+}
+}
 gltf/naming_version=1
 gltf/embedded_image_handling=1

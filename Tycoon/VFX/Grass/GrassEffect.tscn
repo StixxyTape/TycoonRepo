@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://73j58jlcxxdm"]
+
+[ext_resource type="Script" path="res://VFX/Grass/GrassEffect.gd" id="1_ri1yx"]
+[ext_resource type="PackedScene" uid="uid://cw0hyut8a0w64" path="res://VFX/Grass/GrassSprite.tscn" id="2_rsgyc"]
+
+[node name="GrassEffect" type="Node3D"]
+script = ExtResource("1_ri1yx")
+
+[node name="Sprite3D" parent="." instance=ExtResource("2_rsgyc")]
+
+[node name="Sprite3D2" parent="." instance=ExtResource("2_rsgyc")]
+
+[node name="Sprite3D3" parent="." instance=ExtResource("2_rsgyc")]
+
+[node name="Sprite3D4" parent="." instance=ExtResource("2_rsgyc")]
+
+[node name="Sprite3D5" parent="." instance=ExtResource("2_rsgyc")]
