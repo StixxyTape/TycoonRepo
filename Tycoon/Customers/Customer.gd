@@ -129,8 +129,9 @@ func ChooseShelf():
 				lookingForShelf = false
 				ChooseCheckout()
 			else:
-				Global.customerSys.MoveToPrepPhaseCheck()
-				queue_free()
+				movementDir = (exitSpot - Vector2(position.x, position.z)).normalized()
+				movingToExit = true
+				return
 				
 			return
 			
@@ -150,8 +151,9 @@ func ChooseShelf():
 			round(interactionSpot.global_position.x), round(interactionSpot.global_position.z)
 			))
 	else:
-		Global.customerSys.MoveToPrepPhaseCheck()
-		queue_free()
+		movementDir = (exitSpot - Vector2(position.x, position.z)).normalized()
+		movingToExit = true
+		return
 	
 func PathFind(targetPos : Vector2):
 	# Reset these variables
@@ -234,6 +236,8 @@ func PathFind(targetPos : Vector2):
 		# To prevent infinite path searching
 		effort -= 1
 		if effort <= 0:
+			movementDir = (exitSpot - Vector2(position.x, position.z)).normalized()
+			movingToExit = true
 			return
 		# If an interaction spot is available but blocked, prevents game from crashing
 		if priorityQueue.min() == null:
@@ -296,7 +300,7 @@ func PathFind(targetPos : Vector2):
 		movingAlongPath = true
 	
 	currentPathList = pathList
-
+		
 func MoveToEntrance(delta : float):
 	if Vector2(position.x, position.z).distance_to(nearExitSpot) <= pathfindRange:
 		movingNearEntrance = false
@@ -313,6 +317,12 @@ func MoveToExit(delta : float):
 	position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
 	
 func MoveToPath(delta : float):
+	# To fix some dumb bitch ass bug with pathfinding >:(
+	if nextPath == 0:
+		pathfindRange = .2
+	elif nextPath == 1:
+		UpdateTimeScale()
+		
 	if (nextPath == currentPathList.size()
 	or Vector2(position.x, position.z).distance_to(currentPathList[currentPathList.size() - 1]) <= pathfindRange):
 		movingAlongPath = false
@@ -332,6 +342,9 @@ func MoveToPath(delta : float):
 		movementDir = (currentPathList[nextPath] - Vector2(position.x, position.z)).normalized()
 		look_at(Vector3(currentPathList[nextPath].x, 0.5, currentPathList[nextPath].y))
 	else:
+		print(Vector2(position.x, position.z).distance_to(currentPathList[nextPath]))
+		print("PathfindRange: ", pathfindRange)
+		
 		position += Vector3(movementDir.x, 0, movementDir.y) * movementSpeed * delta
 
 func AddToBasket():
@@ -460,6 +473,5 @@ func Checkout():
 		await currentCheckout.scanned
 	
 	currentCheckout.MoveQueue()
-	
 	movingNearExit = true
 	PathFind(nearExitSpot)

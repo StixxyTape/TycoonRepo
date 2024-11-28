@@ -7,7 +7,6 @@ func _ready() -> void:
 	Global.switchPhaseSignal.connect(GridUpdate)
 	
 func GridUpdate():
-	print("wow")
 	if !Global.preparationPhase:
 		HideBuildGrid()
 		return

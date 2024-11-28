@@ -14,9 +14,12 @@ res://VFX/Grass/GrassEffect.tscn
 res://Shelves/BasicShelf.tscn
 res://Facilities/Checkouts/BasicCheckout.tscn
 res://Main/Scenes/UISystem.tscn
-res://Customers/Customer.gd
-res://Main/Scripts/Global.gd
-res://Main/Systems/SystemCustomer.gd
-res://Main/Systems/SystemGrid.gd
 res://Main/Systems/SystemBuild.gd
+res://Main/Systems/SystemGrid.gd
+res://Main/Scripts/SystemFloatingGrid.gd
+res://Models/Stock/Beans.tres
+res://Main/Systems/SystemUI.gd
+res://Customers/Customer.gd
 res://Main/Scripts/SaveLoad.gd
+res://Main/Scripts/Global.gd
+res://Facilities/Checkouts/Checkout.gd

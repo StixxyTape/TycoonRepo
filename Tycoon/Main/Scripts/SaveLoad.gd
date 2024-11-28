@@ -107,6 +107,9 @@ func LoadGame():
 				newObj.rotation = StrToVec3(dicData["rotation"])
 				newObj.scale = StrToVec3(dicData["scale"])
 				newObj.set_meta("currentFloor", currentFloor)
+				Global.gridSys.DuplicateMaterial(newObj)
+				Global.gridSys.GetMaterial(newObj).albedo_texture = load(dicData["texture"])
+				
 				for group in dicData["groups"]:
 					newObj.add_to_group(group, true)
 				if newObj.is_in_group("Edge"):
@@ -181,6 +184,8 @@ func LoadGame():
 					Global.floatingGridSys.GridUpdate()
 						
 	Global.UpdateUI()
+	Global.currentMode = 0
+	Global.switchSystemSignal.emit()
 	Global.loading = false
 	
 func SaveGame():
@@ -237,7 +242,8 @@ func SaveBuilding(saveFile):
 			"posZ" : object.global_position.z,
 			"rotation" : object.rotation,
 			"scale" : object.scale,
-			"currentFloor" : object.get_meta("currentFloor")
+			"currentFloor" : object.get_meta("currentFloor"),
+			"texture" : Global.gridSys.GetMaterial(object).albedo_texture.get_path()
 		}
 		if object.is_in_group("Shelf"):
 			var stockTypes : Array

@@ -40,6 +40,7 @@ func StockUpdate():
 		stockLabel.text = str(amount)
 
 func ShelfUpdate(shelf : Node3D):
+	return
 	var stockName : String = Global.stockSys.stockInventory[shelf.stockType]["name"]
 	$Shelf/HBoxContainer/Label.text = "Current Shelf: " + shelf.name
 	$Shelf/HBoxContainer2/Label.text = "Stock Type: " + stockName

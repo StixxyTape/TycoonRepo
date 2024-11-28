@@ -85,7 +85,7 @@ func ChangePhase(toActionPhase : bool = true):
 		preparationPhase = false
 		currentMode = 0
 		uiSys.ResetUI()
-		customerSys.BeginCustomerSpawn(2, 2, .5)
+		customerSys.BeginCustomerSpawn(randi_range(1, 10), 2, .5)
 		uiSys.EstablishTimeControls()
 	else:
 		preparationPhase = true

@@ -52,7 +52,6 @@ func EstablishGrid():
 		var wallHiderName : String = "X" + str(x * 100)
 		var newWallHider : Node3D = wallHider.instantiate()
 		newWallHider.name = wallHiderName
-		print(newWallHider.name)
 		Global.buildSys.get_node("Walls").add_child(newWallHider)
 	
 	for y in gridSize.y + 1:
@@ -60,7 +59,6 @@ func EstablishGrid():
 		var wallHiderName : String = "Y" + str(y * 100)
 		var newWallHider : Node3D = wallHider.instantiate()
 		newWallHider.name = wallHiderName
-		print(newWallHider.name)
 		Global.buildSys.get_node("Walls").add_child(newWallHider)
 			
 	for x in gridSize.x:
@@ -156,9 +154,9 @@ func EstablishGrass(cells):
 			get_node("../BuildSystem").add_child(newFloor)
 
 			GetMaterial(newFloor).albedo_texture = grassText
-		
-			var newGrass = grassEffect.instantiate()
-			newFloor.add_child(newGrass)
+			
+			#var newGrass = grassEffect.instantiate()
+			#newFloor.add_child(newGrass)
 				
 	for floor in floorGridDics[0]:
 		Global.buildSys.floorFloors[0].append(floorGridDics[0][floor]["floorData"])
